@@ -40,6 +40,18 @@ During the 5 seasons spanning the 1996-97 season to the 2000-01 season, 22.8% of
 
 What is surprising is that the median margin at surrender has sat at roughly 21 points for thirty years. Coaches are not quitting earlier within a given blowout as their threshold is identical, the number of situations calling for it grew. This could support the argument that the league as a whole is getting less competitive as more games result in blowouts.
 
+## The Action of Surrendering is Contagious
+
+From the data it can be shown that as an NBA coach, once the opponent has emptied his bench, you become substantially more likely to empty yours as well.
+
+Odds ratio 1.35, 95% CI [1.29, 1.42], z = +12.8.
+
+
+Raw rates: 54.0% withdraw when the opponent already has, 42.8% when he has not. Unadjusted that is an odds ratio of about 1.57; the model reports 1.35 because it also accounts for how long the game has been settled and whether the team is winning. The difference between those two figures is what the controls remove.
+
+Two men are watching each other's bench. Once one has conceded, the other is released — from the risk of looking foolish, and from the possibility of losing. And the reciprocity is intensifying: among games where anyone gives up, the average number of teams doing so has gone from 1.271 to 1.435 (r = +0.836). Two is the ceiling, since there are only two benches.
+
+Mike Fratello described the instinct to Bleacher Report years before anyone measured it: does the other team pull their starters out, and if they do, do you pull yours?
 
 
 
