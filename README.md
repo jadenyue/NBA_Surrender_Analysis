@@ -88,9 +88,9 @@ From this, we get a odds ratio of 1.325 (1542.6/1164.4), which means coaches who
 
 Additionally, from the 'OR' column of table, we can also interpret the gradient. When a game is settled with four or five minutes left, the opponent's bench emptying doubles the odds of following. While in games that are settled with more than twelve minutes, the effect is nonexistent. A narrow window forces a decision and the other coach going first makes it acceptable, whereas with twenty minutes left, there's no urgency and no need to commit. 
 
-The findings align with former coach and TNT analyst Mike Fratello's comments from [2018](https://bleacherreport.com/articles/2762927-the-truths-about-garbage-time-in-the-nba), where he noted how coaches often think about "Does the other team pull their starters out, and if they do, do you pull yours out? All of that goes into a coach's decision process."
+The findings align with former coach and TNT analyst Mike Fratello's comments from 2018, where he noted how coaches often think about ["Does the other team pull their starters out, and if they do, do you pull yours out? All of that goes into a coach's decision process."](https://bleacherreport.com/articles/2762927-the-truths-about-garbage-time-in-the-nba)
 
-Mike Fratello described the instinct to Bleacher Report years before anyone measured it: does the other team pull their starters out, and if they do, do you pull yours? https://bleacherreport.com/articles/2762927-the-truths-about-garbage-time-in-the-nba
+
 
 
 
