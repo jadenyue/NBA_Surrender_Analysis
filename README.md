@@ -19,7 +19,7 @@ By modelling the relationship, we create the surrender curve to represent the ty
 
 The full derivation of these counts can be found in XXXXX
 
-It can also be noted that at every min remaining point, the leading coach waits two to three points longer than the trailing one. The reason is asymmetric risk: conceding a loss costs nothing, but calling off a win you might still lose can be punished.
+It can also be noted that at every min remaining point, the leading coach waits two to three points longer than the trailing one. The reason is asymmetric risk: conceding a loss costs nothing, but losing after calling off a lead is never a good look.
 
 ## Surrendering in the NBA happens far more than it used to
 During the 5 seasons spanning the 1996-97 season to the 2000-01 season, 22.8% of games involved at least one team surrendering. 25 years later however (2020-21 to 2025-26), a surrender event now happens in 36.6% of all games. Correlation with season +0.880.
@@ -38,20 +38,59 @@ During the 5 seasons spanning the 1996-97 season to the 2000-01 season, 22.8% of
 | 2024-25   | 677 |           0.550 |            21 |             3.4 |
 | 2025-26   | 673 |           0.545 |            21 |             3.7 |
 
-What is surprising is that the median margin at surrender has sat at roughly 21 points for thirty years. Coaches are not quitting earlier within a given blowout as their threshold is identical, the number of situations calling for it grew. This could support the argument that the league as a whole is getting less competitive as more games result in blowouts.
+What is surprising is that the median margin at surrender has been at roughly 21 points for thirty years. Coaches are not quitting earlier within a given blowout as their threshold is identical, its just that the number of situations calling for it grew. This could support the argument that the league as a whole is getting less competitive as more games result in blowouts.
 
 ## The Action of Surrendering is Contagious
 
 From the data it can be shown that as an NBA coach, once the opponent has emptied his bench, you become substantially more likely to empty yours as well.
 
-Odds ratio 1.35, 95% CI [1.29, 1.42], z = +12.8.
+Odds ratio 1.35, 95% CI [1.29, 1.42], z = +13.0.
 
+Which was obtained first using counts of games surrendered when one of the coaches surrender
 
-Raw rates: 54.0% withdraw when the opponent already has, 42.8% when he has not. Unadjusted that is an odds ratio of about 1.57; the model reports 1.35 because it also accounts for how long the game has been settled and whether the team is winning. The difference between those two figures is what the controls remove.
+|                   | surrendered | did not |  rate |
+|-------------------|---------:|--------:|------:|
+| Opponent surrendered |    6,068 |   5,177 | 54.0% |
+| Opponent did not  |    5,177 |   6,906 | 42.8% |
 
-Two men are watching each other's bench. Once one has conceded, the other is released — from the risk of looking foolish, and from the possibility of losing. And the reciprocity is intensifying: among games where anyone gives up, the average number of teams doing so has gone from 1.271 to 1.435 (r = +0.836). Two is the ceiling, since there are only two benches.
+(By strictly looking at count data, I initially assumed the odds ratio to be 1.56 by simply doing (6068 × 6906) / (5177 × 5177). However, this ratio would create positive bias and overestimate the true effect of one coach surrendering on the other coaches decision, as time left in the game is not considered. 
+I learned to think about it like this: Imagine two coaches that are completely ignorant to what the other coach does, each independently flipping a coin every thirty seconds to determine whether to surrender. In a game decided with 20 minutes left they get 40 flips each, while in one decided with 5 minutes left, only 10 flips. The long games will show "both quit" far more often, and show that one coach surrendering influences the other coach to do the same when there is no effect.)
 
-Mike Fratello described the instinct to Bleacher Report years before anyone measured it: does the other team pull their starters out, and if they do, do you pull yours?
+I chose to solve this problem using the Mantel-Haenszel estimator. Rather than one count per game, by splitting the settled time into multiple bands of equal **count** (unequal widths), then taking a weighted average, we can adjust for the differences in time settled, and weight each stratum by how much information it holds about the odds ratio. 
+Additionally, a filter of only looking at games settled with at least  4 minutes remaining was implemented to as if the game only stopped being competitive with a minute left, the coach had no window to act, and you can't measure how readily a coach quits in a game where quitting was never an option. 
+
+By using 5 bands (found little marginal gain in eliminating confounding through increasing bands), we get: 
+
+| Settled band |      n |     a |     b |     c |     d |    OR |  a·d/n |  b·c/n | 
+|--------------|-------:|------:|------:|------:|------:|------:|-------:|-------:|
+| 3.99–5.13    |  4,660 |   628 |   809 |   809 | 2,414 | 2.316 |  325.3 |  140.4 |
+| 5.13–6.70    |  4,680 |   950 | 1,023 | 1,023 | 1,684 | 1.529 |  341.8 |  223.6 |
+| 6.70–8.77    |  4,690 | 1,296 | 1,086 | 1,086 | 1,222 | 1.343 |  337.7 |  251.5 |
+| 8.77–12.20   |  4,634 | 1,476 | 1,113 | 1,113 |   932 | 1.110 |  296.9 |  267.3 |
+| 12.20–31.08  |  4,664 | 1,718 | 1,146 | 1,146 |   654 | 0.856 |  240.9 |  281.6 |
+| **TOTAL**    | 23,328 |       |       |       |       |       | 1542.6 | 1164.4 |
+
+Where 
+|            | Meaning                                                        |
+|------------|----------------------------------------------------------------|
+| Settled band | how long the game had been decided for, in minutes           |
+| `n`        | team-games in that band                                        |
+| `a`        | opponent quit and I quit                                       |
+| `b`        | opponent quit, I did not                                       |
+| `c`        | I quit, opponent did not                                       |
+| `d`        | neither quit                                                   |
+| `OR`       | the odds ratio for that band alone = `a·d / b·c`                |
+| `a·d/n`, `b·c/n` | the two parts that get summed to combine bands     |
+
+Note the counts within each band slightly deviates from being exactly equal due to multiple instances of games being settled at the same time. However, the effect can be considered negligible. 
+
+From this, we get a odds ratio of 1.325 (1542.6/1164.4), which means coaches whose opponent has already pulled his starters are 1.325 times more likely, in odds, to pull their own.
+
+Additionally, from the 'OR' column of table, we can also interpret the gradient. When a game is settled with four or five minutes left, the opponent's bench emptying doubles the odds of following. While in games that are settled with more than twelve minutes, the effect is nonexistent. A narrow window forces a decision and the other coach going first makes it acceptable, whereas with twenty minutes left, there's no urgency and no need to commit. 
+
+The findings align with former coach and TNT analyst Mike Fratello's comments from [2018](https://bleacherreport.com/articles/2762927-the-truths-about-garbage-time-in-the-nba), where he noted how coaches often think about "Does the other team pull their starters out, and if they do, do you pull yours out? All of that goes into a coach's decision process."
+
+Mike Fratello described the instinct to Bleacher Report years before anyone measured it: does the other team pull their starters out, and if they do, do you pull yours? https://bleacherreport.com/articles/2762927-the-truths-about-garbage-time-in-the-nba
 
 
 
