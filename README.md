@@ -42,51 +42,59 @@ What is surprising is that the median margin at surrender has been at roughly 21
 
 ## The Action of Surrendering is Contagious
 
-From the data it can be shown that as an NBA coach, once the opponent has emptied his bench, you become substantially more likely to empty yours as well.
+It can be shown that as an NBA coach, once the opponent has emptied his bench, you become substantially more likely to empty yours as well.
 
-Odds ratio 1.35, 95% CI [1.29, 1.42], z = +13.0.
+Counts of games surrendered when one of the coaches surrender
 
-Which was obtained first using counts of games surrendered when one of the coaches surrender
+|                       | surrendered | did not |  rate |
+|-----------------------|------------:|--------:|------:|
+| Opponent surrendered  |       6,584 |   6,412 | 50.7% |
+| Opponent did not      |       6,412 |  51,678 | 11.0% |
 
-|                   | surrendered | did not |  rate |
-|-------------------|---------:|--------:|------:|
-| Opponent surrendered |    6,068 |   5,177 | 54.0% |
-| Opponent did not  |    5,177 |   6,906 | 42.8% |
-
-(By strictly looking at count data, it initially seems like the odds ratio is 1.56 by simply doing (6068 × 6906) / (5177 × 5177). However, this ratio would create positive bias and overestimate the true effect of one coach surrendering on the other coaches decision, as time left in the game is not considered. 
+(By strictly looking at count data, it initially seems like the odds ratio is 8.28, from (6,584 × 51,678) / (6,412 × 6,412). However, this ratio would create positive bias and overestimate the true effect of one coach surrendering on the other coaches decision, as time left in the game is not considered. 
 I learned to think about it like this: Imagine two coaches that are completely ignorant to what the other coach does, each independently flipping a coin every thirty seconds to determine whether to surrender. In a game decided with 20 minutes left they get 40 flips each, while in one decided with 5 minutes left, only 10 flips. The long games will show "both quit" far more often, and show that one coach surrendering influences the other coach to do the same when there is no effect.)
 
-This problem can be mitigated using the Mantel-Haenszel estimator. Rather than one count per game, by splitting the settled time into multiple bands of equal **count** (unequal widths), then taking a weighted average, we can adjust for the differences in time settled, and weight each stratum by how much information it holds about the odds ratio. 
-Additionally, a filter of only looking at games settled with at least  4 minutes remaining was implemented to as if the game only stopped being competitive with a minute left, the coach had no window to act, and you can't measure how readily a coach quits in a game where quitting was never an option. 
 
-By using 5 bands (found little marginal gain in eliminating confounding through increasing bands), we get: 
+A discrete-time hazard model fixes this. Every settled team-game is split into 30 second intervals, and each interval is marked as 1 or 0 based on if the coach pulled the starters during this one, given the coach hadn't yet? Because every interval is the same length, having more of them cannot inflate the effect.
 
-| Settled band |      n |     a |     b |     c |     d |    OR |  a·d/n |  b·c/n | 
-|--------------|-------:|------:|------:|------:|------:|------:|-------:|-------:|
-| 3.99–5.13    |  4,660 |   628 |   809 |   809 | 2,414 | 2.316 |  325.3 |  140.4 |
-| 5.13–6.70    |  4,680 |   950 | 1,023 | 1,023 | 1,684 | 1.529 |  341.8 |  223.6 |
-| 6.70–8.77    |  4,690 | 1,296 | 1,086 | 1,086 | 1,222 | 1.343 |  337.7 |  251.5 |
-| 8.77–12.20   |  4,634 | 1,476 | 1,113 | 1,113 |   932 | 1.110 |  296.9 |  267.3 |
-| 12.20–31.08  |  4,664 | 1,718 | 1,146 | 1,146 |   654 | 0.856 |  240.9 |  281.6 |
-| **TOTAL**    | 23,328 |       |       |       |       |       | 1542.6 | 1164.4 |
+|                                        |             Value |
+|----------------------------------------|------------------:|
+| Settled team-games                     |            23,328 |
+| Half-minute intervals                  |           311,080 |
+| Intervals ending in a pull             |            11,245 |
+| Baseline chance per interval           |             3.61% |
+| Intervals with the opponent already gone |    65,030 (20.9%) |
 
-Where 
-|            | Meaning                                                        |
-|------------|----------------------------------------------------------------|
-| Settled band | how long the game had been decided for, in minutes           |
-| `n`        | team-games in that band                                        |
-| `a`        | opponent quit and I quit                                       |
-| `b`        | opponent quit, I did not                                       |
-| `c`        | I quit, opponent did not                                       |
-| `d`        | neither quit                                                   |
-| `OR`       | the odds ratio for that band alone = `a·d / b·c`                |
-| `a·d/n`, `b·c/n` | the two parts that get summed to combine bands     |
 
-Note the counts within each band slightly deviates from being exactly equal due to multiple instances of games being settled at the same time. However, the effect can be considered negligible. 
+The model fitted to those intervals:
+```
+logit(chance of pulling in interval k) = α_k + β × [opponent already gone]
+```
 
-From this, we get a odds ratio of 1.325 (1542.6/1164.4), which means coaches whose opponent has already pulled his starters are 1.325 times more likely, in odds, to pull their own.
+Fitting gives:
+```
+Odds Ratio: 1.487, 95% CI [1.423, 1.554], z = +17.6.
+```
+Which means coaches whose opponent has already pulled his starters are 1.487 times more likely, in odds, to pull their own.
 
-Additionally, from the 'OR' column of table, we can also interpret the gradient. When a game is settled with four or five minutes left, the opponent's bench emptying doubles the odds of following. While in games that are settled with more than twelve minutes, the effect is nonexistent. A narrow window forces a decision and the other coach going first makes it acceptable, whereas with twenty minutes left, there's no urgency and no need to commit. 
+
+
+
+
+Additionally, Adding an interaction between the indicator and the length of the settled window, we can see the effect weakening sharply when the window widens. When a game is settled with 2 to 4 minutes left, the opponent's bench emptying doubles the odds of following. While in games that are settled with more than twelve minutes, the effect is almost nonexistent. A narrow window forces a decision and the other coach going first makes it acceptable, whereas with twenty minutes left, there's no urgency and no need to commit. 
+
+
+| Settled window | Odds ratio |       95% CI |
+|----------------|-----------:|-------------:|
+| 1 minute       |       2.29 | [2.10, 2.49] |
+| 2 minutes      |       2.17 | [2.01, 2.35] |
+| 4 minutes      |       1.96 | [1.83, 2.09] |
+| 8 minutes      |       1.59 | [1.52, 1.66] |
+| 12 minutes     |       1.29 | [1.23, 1.36] |
+| 16 minutes     |       1.05 | [0.98, 1.13] |
+| 20 minutes     |       0.86 | [0.77, 0.95] |
+
+
 
 The findings align with former coach and TNT analyst Mike Fratello's comments from 2018, where he noted how coaches often think about ["Does the other team pull their starters out, and if they do, do you pull yours out?" and how "All of that goes into a coach's decision process."](https://bleacherreport.com/articles/2762927-the-truths-about-garbage-time-in-the-nba)
 
@@ -104,6 +112,8 @@ By identifying three variables that potentially influence a coach's decision to 
 
 Opponent quality is irrelevant too as coaches respond to their own position rather than to who is beating them. What does matter is the strength of your own team. Coaches of good teams give up on games more quickly than bad ones, which may seem counterintuitive at first, but a good team's bench is deeper, so emptying it costs less, and the star player of a good team would be more valuable to rest and protect.
 
+##Different coaches differ in their tendency to surrender enormously 
+This was the question that initially inspired this study: finding 
 
 
 
