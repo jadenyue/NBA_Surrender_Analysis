@@ -77,12 +77,7 @@ Odds Ratio: 1.487, 95% CI [1.423, 1.554], z = +17.6.
 ```
 Which means coaches whose opponent has already pulled his starters are 1.487 times more likely, in odds, to pull their own.
 
-
-
-
-
-Additionally, Adding an interaction between the indicator and the length of the settled window, we can see the effect weakening sharply when the window widens. When a game is settled with 2 to 4 minutes left, the opponent's bench emptying doubles the odds of following. While in games that are settled with more than twelve minutes, the effect is almost nonexistent. A narrow window forces a decision and the other coach going first makes it acceptable, whereas with twenty minutes left, there's no urgency and no need to commit. 
-
+Additionally, adding an interaction between the indicator and the length of the settled window, we can see the effect weakening sharply when the window widens. When a game is settled with 2 to 4 minutes left, the opponent's bench emptying doubles the odds of following. While in games that are settled with more than twelve minutes, the effect is almost nonexistent. A narrow window forces a decision and the other coach going first makes it acceptable, whereas with twenty minutes left, there's no urgency and no need to commit. 
 
 | Settled window | Odds ratio |       95% CI |
 |----------------|-----------:|-------------:|
@@ -108,12 +103,26 @@ By identifying three variables that potentially influence a coach's decision to 
 | Playing at home                   | 1.026 | [0.967, 1.088] |  +0.8 | no          |
 | Opponent strength (per SRS point) | 0.998 | [0.991, 1.004] |  -0.7 | no          |
 
- Playing at home has no effect on coach's decision to surrender. Which is surprising as home-court advantage is one of the most studied aspects in all of sports. It raises scoring rates (Ribeiro et al., 2016), inflates subjective stat-keeping (Bommela et al.,2021), and bends officiating (Price, Remer & Stone, 2012). Home court advantage turns up almost everywhere, but does not change a coach's tendency to surrender. On average, theres no embarrassment effect in front of your own crowd, no extra push for the home fans who bought tickets. 
+ Playing at home has no effect on coach's decision to surrender. Which is surprising as home-court advantage is one of the most studied aspects in all of sports. It raises scoring rates (Ribeiro et al., 2016), inflates subjective stat-keeping (Bommela et al.,2021), and bends officiating (Price, Remer & Stone, 2012). Home court advantage turns up almost everywhere, but does not change a coach's tendency to surrender. On average, there doesn't seem to be any embarrassment effect in front of your own crowd, nor extra push for the home fans who bought tickets. 
 
-Opponent quality is irrelevant too as coaches respond to their own position rather than to who is beating them. What does matter is the strength of your own team. Coaches of good teams give up on games more quickly than bad ones, which may seem counterintuitive at first, but a good team's bench is deeper, so emptying it costs less, and the star player of a good team would be more valuable to rest and protect.
+Opponent quality is irrelevant too, suggesting that coaches respond to their own position rather than to who is beating them. What does matter is the strength of your own team. Coaches of good teams give up on games more quickly than bad ones, which may seem counterintuitive at first, but a good team's bench is deeper, so emptying it costs less, and the star player of a good team would be more valuable to rest and protect.
 
 ##Different coaches differ in their tendency to surrender enormously 
-This was the question that initially inspired this study: finding 
+This was the question that initially inspired this study: finding the differences in how reactive a coach is to surrender.
+
+
+The obvious way to measure this is to count the share of decided games in which each coach coach end with his starters of. However, this fails to account for the vast differences in surrender window. 
+
+| Game was settled for | Share of teams who pulled |
+|----------------------|--------------------------:|
+| under 1 minute       |                      0.4% |
+| 1–4 minutes          |                      8.0% |
+| 4–8 minutes          |                     39.8% |
+| 8+ minutes           |                      57.9% |
+
+A coach whose games happened to be settled early would have a high raw percentage without having a quicker tendency to act. 
+
+This issue can be solved once again by using the discrete-time hazard model.
 
 
 
