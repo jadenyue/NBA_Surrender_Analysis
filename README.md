@@ -110,7 +110,6 @@ Opponent quality is irrelevant too, suggesting that coaches respond to their own
 ##Different coaches differ in their tendency to surrender enormously 
 This was the question that initially inspired this study: finding the differences in how reactive a coach is to surrender.
 
-
 The obvious way to measure this is to count the share of decided games in which each coach coach end with his starters of. However, this fails to account for the vast differences in surrender window. 
 
 | Game was settled for | Share of teams who pulled |
@@ -122,12 +121,66 @@ The obvious way to measure this is to count the share of decided games in which 
 
 A coach whose games happened to be settled early would have a high raw percentage without having a quicker tendency to act. 
 
-This issue can be solved once again by using the discrete-time hazard model.
+This issue can be solved once again by using the discrete-time hazard model and splitting each game into 30 second intervals. 
+
+Additionally, Only games with at least 4 minutes remaining when settled were included. This filter is necessary as bad teams get disproportionally blown out while also pulling their starters far less than winning teams (41% vs 55%). So a coach of a bad team accumulates a pile of games where the team is getting blown out early, and in those he rarely withdraws. That drags his estimate toward zero without any connection to his actual tendency. 
+
+If no minimum window is implemented, the failure can be seen below:
+| Coach        | Season  | Team record     | Team SRS | Games coached |   HR | %pull |  n |
+|--------------|---------|-----------------|---------:|---------------|-----:|------:|---:|
+| Bill Hanzlik | 1997-98 | Denver 11–71    |   −11.74 | 82 of 82      | 0.09 |    2% | 82 |
+| Mike Dunlap  | 2012-13 | Charlotte 21–61 |    −9.29 | 82 of 82      | 0.11 |    2% | 82 |
+| Ed Tapscott  | 2008-09 | Washington 19–63 |   −6.98 | 71 of 82      | 0.14 |    3% | 71 |
+| Dick Motta   | 1996-97 | Denver 21–61    |    −6.40 | 69 of 82      | 0.18 |    3% | 69 |
+| M.L. Carr    | 1996-97 | Boston 15–67    |    −6.62 | 82 of 82      | 0.30 |    5% | 
+
+The coaches that seem to surrender the most are five one-season coaches of terrible teams, and the ranking becomes a list of bad teams rather than an actual measure of coaches' tendency.
+
+With the minimum window of 4 minutes:
+|                              |   Value |
+|------------------------------|--------:|
+| Settled team-games           |  23,328 |
+| Coach-attributed             |  22,145 |
+| Half-minute intervals        | 270,832 |
+| Intervals ending in a pull   |  10,085 |
+| Baseline chance per interval |   3.72% |
+
+Fitting to the model
+```
+logit(chance of pulling in interval k) = α_k + β_coach + γ × [eventual winner]
+```
+Where: 
+|           | Meaning                                                                                                    |
+|-----------|------------------------------------------------------------------------------------------------------------|
+| `α_k`     | a free parameter per interval index - lets the model learn how the urge builds over settled time, without assuming a shape |
+| `β_coach` | each coach's own adjustment; `exp(β)` is his hazard ratio                                                   |
+| `γ`       | winners pull faster than losers: +0.286, z = +13.1                    
+
+Looking at the 109 coaches that have coached at least 60 settled games:
+
+Quickest to surrender
+| Coach            |   HR |       95% CI |    z | Median wait (min) | %pull |   n |
+|------------------|-----:|-------------:|-----:|------------:|------:|----:|
+| Darvin Ham       | 2.36 | [1.66, 3.35] | +4.8 |        4.17 |   77% |  60 |
+| Ime Udoka        | 2.23 | [1.70, 2.93] | +5.8 |        4.35 |   82% | 125 |
+| Chris Finch      | 2.14 | [1.65, 2.76] | +5.8 |        4.88 |   82% | 151 |
+| Nick Nurse       | 1.88 | [1.47, 2.40] | +5.1 |        5.13 |   72% | 215 |
+| Mike Budenholzer | 1.86 | [1.48, 2.34] | +5.3 |        4.90 |   70% | 300 |
+| Phil Jackson     | 1.67 | [1.34, 2.10] | +4.5 |        5.28 |   65% | 346 |
 
 
+Slowest:
+| Coach         |   HR |       95% CI |    z | Median wait (min) | %pull |   n |
+|---------------|-----:|-------------:|-----:|------------:|------:|----:|
+| Rick Pitino   | 0.29 | [0.17, 0.49] | −4.6 |       never |   15% |  97 |
+| Sidney Lowe   | 0.31 | [0.17, 0.58] | −3.7 |       never |   18% |  60 |
+| George Karl   | 0.36 | [0.28, 0.48] | −7.2 |        21.2 |   22% | 411 |
+| David Fizdale | 0.42 | [0.26, 0.69] | −3.4 |        19.1 |   25% |  73 |
+| Doug Collins  | 0.51 | [0.37, 0.72] | −3.9 |        13.1 |   28% | 170 |
+| Mike D'Antoni | 0.52 | [0.40, 0.68] | −4.9 |        13.1 |   31% | 348 |
 
+Ham and Pitino differ by ≈8.5x in their hazard ratio. So in theory, if these two coaches were in the same situation: same score, same clock, same time since the game stopped being competitive, Ham is roughly 8.5 times more likely than Pitino to surrender in the next thirty seconds.
 
-
-
+The full ranking of all 109 coaches can be found in XXX
 
 
