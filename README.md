@@ -181,6 +181,6 @@ Slowest:
 
 Ham and Pitino differ by ≈8.5x in their hazard ratio. So in theory, if these two coaches were in the same situation: same score, same clock, same time since the game stopped being competitive, Ham is roughly 8.5 times more likely than Pitino to surrender in the next thirty seconds.
 
-The full ranking of all 109 coaches can be found in XXX
+The full ranking of all 109 coaches and the Python file used to compute the coach statistics can be found in XXX
 
 
