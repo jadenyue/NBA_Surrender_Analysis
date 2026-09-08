@@ -93,7 +93,7 @@ Additionally, adding an interaction between the indicator and the length of the 
 
 The findings align with former coach and TNT analyst Mike Fratello's comments from 2018, where he noted how coaches often think about ["Does the other team pull their starters out, and if they do, do you pull yours out?" and how "All of that goes into a coach's decision process."](https://bleacherreport.com/articles/2762927-the-truths-about-garbage-time-in-the-nba)
 
-##Variables that do and don't matter in determining surrender odds
+## Variables that do and don't matter in determining surrender odds
 
 By identifying three variables that potentially influence a coach's decision to surrender and conducting statistical analysis on the effects, it can be seen that only one of the three parameters can be shown to have a real effect.
 
@@ -107,7 +107,7 @@ By identifying three variables that potentially influence a coach's decision to 
 
 Opponent quality is irrelevant too, suggesting that coaches respond to their own position rather than to who is beating them. What does matter is the strength of your own team. Coaches of good teams give up on games more quickly than bad ones, which may seem counterintuitive at first, but a good team's bench is deeper, so emptying it costs less, and the star player of a good team would be more valuable to rest and protect.
 
-##Different coaches differ in their tendency to surrender enormously 
+## Different coaches differ in their tendency to surrender enormously 
 This was the question that initially inspired this study: finding the differences in how reactive a coach is to surrender.
 
 The obvious way to measure this is to count the share of decided games in which each coach coach end with his starters of. However, this fails to account for the vast differences in surrender window. 
@@ -183,4 +183,62 @@ Ham and Pitino differ by ≈8.5x in their hazard ratio. So in theory, if these t
 
 The full ranking of all 109 coaches and the Python file used to compute the coach statistics can be found in XXX
 
+# Conclusion, Limitations, and Where This Goes
 
+## Conclusion
+Four findings:
+1. Coaches quit on a curve and the threshold scales with the amount of time left. Coaches need, on average, a 26 point differential to surrender at twelve minutes, and 14 at two. The leading coach consistently waits two to three points longer than the trailing one due to asymmetric risk. 
+
+2. Surrendering has become far more common, but not because coaches tendency changed. The share of games with at least one surrender rose from 22.8% to 36.6%. Yet the median margin at surrender has remained at around 21 points the entire time. Coaches did not lower their standards to surrender. The league produced more blowouts meeting them.
+
+3. The decision spreads between coaches on the same game. Once an opponent has emptied his, a coach's odds of following are multiplied by 1.49, and the effect is more concentrated where the window is narrow, reaching 2.29 at one minute left. 
+
+4. Coaches differ enormously in whether they concede based on their coaching style. Hazard ratios differ by 8.5x at the most extreme, but among games where a coach did surrender, the timing difference is extremely small.
+
+## Limitations
+
+1. The event of surrender is inferred rather than observed. Coaches never state their intent of surrender, so the observation of the last permanent exit of five starters is consistent with surrender, but also with injury, ejection, foul trouble, or minute management unrelated to the score itself. 
+
+2. The four-minute filter on measuring differences in coach tendency is arbitrary. The surrender rate increases smoothly through 0.4%, 8.0%, 39.8% and 57.9% with no natural break. However, looking at the correlations against the four-minute version result in 1.000, 1.000, 0.978 and 0.929 at two, three, six and eight minutes respectively. Therefore, the threshold choice does not impact the results findings significantly, but it is still relevant to mention as a limitation. 
+
+3. The contagion result is not proven to be a mechanism. We know only the odds of whether the opponent had withdrawn, but not if a coach was actually influenced by the opposing coach or both coaches read the same scoreboard and came to the same conclusion independently. 
+
+4. The data is partially incomplete. As the substitutions are not all recorded. Using the best available CSV files of NBA play-by-play data, a few games had incomplete data about substitutions. Games with less than 15 substitutions (median is 20) were excluded from analysis. This lack of data affects older seasons more significantly, with only 74% of 1996-97 team games passing the test, while 98.7% in 2025-26. Which could create bias in the "surrender is happening more" claim. 
+
+5. Team strength is contaminated by the outcome. Basketball's own SRS metric is built from point margin, and point margin is compressed by the behaviour under study. A leading coach emptying his bench costs about 1.2 points off the final margin. The contamination is small against a 4.6 point standard deviation, but the circularity exists.
+
+## Why it Matters, and Where it Leads 
+
+The most informative result is the one that did not move. Incidence rose from 22.8% to 36.6% of games while the median margin at surrender held at roughly 21 points throughout. Had coaches lowered their standards, the required margin would have fallen. It did not. The rise therefore reflects a change in the games rather than in the coaching, and it constitutes a behavioural measure of competitive imbalance: a count of games that professionals judged unwinnable while they were still in progress.
+
+Approximately one game in three is now abandoned by at least one side. In the late 1990s the figure was closer to one in five. Extrapolating the recent slope places the rate above 40% within a decade.
+
+### The timing points to style, not talent
+
+The series is not a steady climb — it is flat through the first half of the sample and then turns. That shape rules out the structural changes usually invoked to explain rising scores. The 2004 hand-checking ban raised offensive efficiency immediately and left the surrender rate untouched for years afterwards. The 2011 lockout and the CBA that followed did nothing to it either.
+
+What the turn coincides with is the three-point revolution. A league in which two-fifths of shots are threes, taken at a faster pace, produces a wider distribution of outcomes than one shooting a fifth of its attempts from range — not because the teams are less equal, but because each possession carries more variance. Leads that once took a quarter to build now arrive in minutes. The mechanism is arithmetic rather than competitive decay.
+
+That distinction matters, because the two explanations imply opposite remedies.
+
+### What this suggests about the next decade
+
+**The second apron probably will not help.** The 2023 CBA's restrictions are designed to break up talent concentrations, and they are already forcing roster decisions that would have been unthinkable under the previous agreement. If the rise were driven by superteams, this would arrest it. But the association here runs with how the game is played, and dispersing talent does not make anyone shoot fewer threes. The likely outcome is that the apron flattens the tail of the distribution — fewer historic juggernauts — while leaving the typical blowout untouched.
+
+**Expansion would push the other way.** Adding franchises dilutes the talent pool across more rotation spots, and expansion seasons have historically produced weaker teams at the bottom of the league. Whatever the apron removes from the top, expansion is likely to add at the bottom.
+
+**The 65-game rule may be counterproductive here.** The 2023 participation policy requires a player to appear in 65 games to qualify for major awards, with a game counting only if he plays twenty minutes or more. A coach can therefore satisfy the rule and still withdraw his star at the twenty-minute mark — which in a decided game is exactly the behaviour this study measures. The policy addresses absence from whole games. It does nothing about departure from decided ones, and its threshold structure arguably encourages it.
+
+### Two further consequences
+
+**The trend is partly self-reinforcing.** One coach conceding makes the other substantially more likely to follow, and that reciprocity has itself been strengthening across the sample. Each additional blowout therefore generates more than one abandonment, so the projection above should be read as a lower bound rather than a central estimate.
+
+**The minutes lost are the valuable ones.** Stronger teams concede sooner, so the games most likely to end early are those featuring the best teams and the highest-profile players — precisely the games with the largest audiences.
+
+### A note on incentives
+
+None of this indicates suboptimal coaching. Conceding a decided game carries no measurable cost and protects a valuable asset, so the observed behaviour is consistent with rational play. The eightfold spread between coaches persists precisely because the decision is unconstrained: absent cost or sanction, individual variation goes unsuppressed. It follows that the behaviour will not change without a change in incentives, and that no rule aimed at rosters or at absence from whole games will touch it.
+
+### What would resolve the open questions
+
+Three data additions would settle most of what remains ambiguous. **Injury-report records** would separate concession from forced substitution. **Withdrawal ordering with a cluster-robust variance** would identify sequence and correct the contagion intervals. And a **team-strength measure restricted to contested minutes** would eliminate the circularity in the control variable. All three lie beyond what public play-by-play alone can support.
