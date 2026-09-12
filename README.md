@@ -1,5 +1,5 @@
 # NBA Surrender Analysis - When coaches give up
-A study and statistical analysis of NBA coach's tendency to "surrender " in games. Built from substitution-level play-by-play records across 30 seasons: 12,996 events, 1996-97 to 2025-26, across 108 coaches. 
+A study and statistical analysis of NBA coach's tendency to "surrender " in games. Built from substitution-level play-by-play records across 30 seasons: 12,996 events, 1996-97 to 2025-26, across 109 coaches. 
 The moment a coach makes the decision to surrender is when the **last of his five starters leaves the floor and does not come back**. Analysing the accumulated data on this event revealed several interesting phenomena and trends that point towards where the league is headed. 
 # What I found
 ## The Surrender Curve
@@ -17,100 +17,14 @@ By modelling the relationship, we create the surrender curve to represent the ty
 | 10-12         |   231 |       27 |      29 |
 | 12+           | 1,495 |       25 |      28 |
 
-The full derivation of these counts can be found in XXXXX
+The full derivation of these counts can be found in `margin_by_clock.py`
 
 It can also be noted that at every min remaining point, the leading coach waits two to three points longer than the trailing one. The reason is asymmetric risk: conceding a loss costs nothing, but losing after calling off a lead is never a good look.
-
-## Surrendering in the NBA happens far more than it used to
-During the 5 seasons spanning the 1996-97 season to the 2000-01 season, 22.8% of games involved at least one team surrendering. 25 years later however (2020-21 to 2025-26), a surrender event now happens in 36.6% of all games. Correlation with season +0.880.
-
-| Season |   n | Events per game | Median margin | Median min left |
-|--------|----:|----------------:|--------------:|----------------:|
-| 1996-97   | 339 |           0.285 |            21 |             3.9 |
-| 1997-98   | 347 |           0.292 |            21 |             3.4 |
-| 1998-99   | 211 |           0.291 |            20 |             3.0 |
-| 1999-00   | 365 |           0.307 |            20 |             3.7 |
-| 2000-01   | 326 |           0.274 |            20 |             3.9 |
-| ...       | ... |           ... |           ...|             ... |
-| 2021-22   | 620 |           0.504 |            21 |             3.5 |
-| 2022-23   | 553 |           0.450 |            20 |             3.4 |
-| 2023-24   | 705 |           0.573 |            21 |             3.5 |
-| 2024-25   | 677 |           0.550 |            21 |             3.4 |
-| 2025-26   | 673 |           0.545 |            21 |             3.7 |
-
-What is surprising is that the median margin at surrender has been at roughly 21 points for thirty years. Coaches are not quitting earlier within a given blowout as their threshold is identical, its just that the number of situations calling for it grew. This could support the argument that the league as a whole is getting less competitive as more games result in blowouts.
-
-## The Action of Surrendering is Contagious
-
-It can be shown that as an NBA coach, once the opponent has emptied his bench, you become substantially more likely to empty yours as well.
-
-Counts of games surrendered when one of the coaches surrender
-
-|                       | surrendered | did not |  rate |
-|-----------------------|------------:|--------:|------:|
-| Opponent surrendered  |       6,584 |   6,412 | 50.7% |
-| Opponent did not      |       6,412 |  51,678 | 11.0% |
-
-(By strictly looking at count data, it initially seems like the odds ratio is 8.28, from (6,584 × 51,678) / (6,412 × 6,412). However, this ratio would create positive bias and overestimate the true effect of one coach surrendering on the other coaches decision, as time left in the game is not considered. 
-I learned to think about it like this: Imagine two coaches that are completely ignorant to what the other coach does, each independently flipping a coin every thirty seconds to determine whether to surrender. In a game decided with 20 minutes left they get 40 flips each, while in one decided with 5 minutes left, only 10 flips. The long games will show "both quit" far more often, and show that one coach surrendering influences the other coach to do the same when there is no effect.)
-
-
-A discrete-time hazard model fixes this. Every settled team-game is split into 30 second intervals, and each interval is marked as 1 or 0 based on if the coach pulled the starters during this one, given the coach hadn't yet? Because every interval is the same length, having more of them cannot inflate the effect.
-
-|                                        |             Value |
-|----------------------------------------|------------------:|
-| Settled team-games                     |            23,328 |
-| Half-minute intervals                  |           311,080 |
-| Intervals ending in a pull             |            11,245 |
-| Baseline chance per interval           |             3.61% |
-| Intervals with the opponent already gone |    65,030 (20.9%) |
-
-
-The model fitted to those intervals:
-```
-logit(chance of pulling in interval k) = α_k + β × [opponent already gone]
-```
-
-Fitting gives:
-```
-Odds Ratio: 1.487, 95% CI [1.423, 1.554], z = +17.6.
-```
-Which means coaches whose opponent has already pulled his starters are 1.487 times more likely, in odds, to pull their own.
-
-Additionally, adding an interaction between the indicator and the length of the settled window, we can see the effect weakening sharply when the window widens. When a game is settled with 2 to 4 minutes left, the opponent's bench emptying doubles the odds of following. While in games that are settled with more than twelve minutes, the effect is almost nonexistent. A narrow window forces a decision and the other coach going first makes it acceptable, whereas with twenty minutes left, there's no urgency and no need to commit. 
-
-| Settled window | Odds ratio |       95% CI |
-|----------------|-----------:|-------------:|
-| 1 minute       |       2.29 | [2.10, 2.49] |
-| 2 minutes      |       2.17 | [2.01, 2.35] |
-| 4 minutes      |       1.96 | [1.83, 2.09] |
-| 8 minutes      |       1.59 | [1.52, 1.66] |
-| 12 minutes     |       1.29 | [1.23, 1.36] |
-| 16 minutes     |       1.05 | [0.98, 1.13] |
-| 20 minutes     |       0.86 | [0.77, 0.95] |
-
-
-
-The findings align with former coach and TNT analyst Mike Fratello's comments from 2018, where he noted how coaches often think about ["Does the other team pull their starters out, and if they do, do you pull yours out?" and how "All of that goes into a coach's decision process."](https://bleacherreport.com/articles/2762927-the-truths-about-garbage-time-in-the-nba)
-
-## Variables that do and don't matter in determining surrender odds
-
-By identifying three variables that potentially influence a coach's decision to surrender and conducting statistical analysis on the effects, it can be seen that only one of the three parameters can be shown to have a real effect.
-
-| Predictor                        |    OR |        95% CI |     z | Real effect? |
-|----------------------------------|------:|--------------:|------:|--------------|
-| Own team strength (per SRS point) | 1.101 | [1.094, 1.109] | +28.9 | yes         |
-| Playing at home                   | 1.026 | [0.967, 1.088] |  +0.8 | no          |
-| Opponent strength (per SRS point) | 0.998 | [0.991, 1.004] |  -0.7 | no          |
-
- Playing at home has no effect on coach's decision to surrender. Which is surprising as home-court advantage is one of the most studied aspects in all of sports. It raises scoring rates (Ribeiro et al., 2016), inflates subjective stat-keeping (Bommela et al.,2021), and bends officiating (Price, Remer & Stone, 2012). Home court advantage turns up almost everywhere, but does not change a coach's tendency to surrender. On average, there doesn't seem to be any embarrassment effect in front of your own crowd, nor extra push for the home fans who bought tickets. 
-
-Opponent quality is irrelevant too, suggesting that coaches respond to their own position rather than to who is beating them. What does matter is the strength of your own team. Coaches of good teams give up on games more quickly than bad ones, which may seem counterintuitive at first, but a good team's bench is deeper, so emptying it costs less, and the star player of a good team would be more valuable to rest and protect.
 
 ## Different coaches differ in their tendency to surrender enormously 
 This was the question that initially inspired this study: finding the differences in how reactive a coach is to surrender.
 
-The obvious way to measure this is to count the share of decided games in which each coach coach end with his starters of. However, this fails to account for the vast differences in surrender window. 
+The obvious way to measure this is to count the share of decided games in which each coach ends with his starters off. However, this fails to account for the vast differences in surrender window. 
 
 | Game was settled for | Share of teams who pulled |
 |----------------------|--------------------------:|
@@ -121,7 +35,7 @@ The obvious way to measure this is to count the share of decided games in which 
 
 A coach whose games happened to be settled early would have a high raw percentage without having a quicker tendency to act. 
 
-This issue can be solved once again by using the discrete-time hazard model and splitting each game into 30 second intervals. 
+This issue can be solved by using a discrete-time hazard model. Every settled team-game is split into 30 second intervals, and each interval is marked as 1 or 0 based on if the coach pulled the starters during this one, given the coach hadn't yet. Because every interval is the same length, having more of them cannot inflate the effect.
 
 Additionally, Only games with at least 4 minutes remaining when settled were included. This filter is necessary as bad teams get disproportionally blown out while also pulling their starters far less than winning teams (41% vs 55%). So a coach of a bad team accumulates a pile of games where the team is getting blown out early, and in those he rarely withdraws. That drags his estimate toward zero without any connection to his actual tendency. 
 
@@ -132,7 +46,7 @@ If no minimum window is implemented, the failure can be seen below:
 | Mike Dunlap  | 2012-13 | Charlotte 21–61 |    −9.29 | 82 of 82      | 0.11 |    2% | 82 |
 | Ed Tapscott  | 2008-09 | Washington 19–63 |   −6.98 | 71 of 82      | 0.14 |    3% | 71 |
 | Dick Motta   | 1996-97 | Denver 21–61    |    −6.40 | 69 of 82      | 0.18 |    3% | 69 |
-| M.L. Carr    | 1996-97 | Boston 15–67    |    −6.62 | 82 of 82      | 0.30 |    5% | 
+| M.L. Carr    | 1996-97 | Boston 15–67    |    −6.62 | 82 of 82      | 0.30 |    5% | 82 |
 
 The coaches that seem to surrender the most are five one-season coaches of terrible teams, and the ranking becomes a list of bad teams rather than an actual measure of coaches' tendency.
 
@@ -179,9 +93,42 @@ Slowest:
 | Doug Collins  | 0.51 | [0.37, 0.72] | −3.9 |        13.1 |   28% | 170 |
 | Mike D'Antoni | 0.52 | [0.40, 0.68] | −4.9 |        13.1 |   31% | 348 |
 
-Ham and Pitino differ by ≈8.5x in their hazard ratio. So in theory, if these two coaches were in the same situation: same score, same clock, same time since the game stopped being competitive, Ham is roughly 8.5 times more likely than Pitino to surrender in the next thirty seconds.
+Ham and Pitino differ by ≈8x in their hazard ratio. So in theory, if these two coaches were in the same situation: same score, same clock, same time since the game stopped being competitive, Ham is roughly 8 times more likely than Pitino to surrender in the next thirty seconds.
 
-The full ranking of all 109 coaches and the Python file used to compute the coach statistics can be found in XXX
+The full ranking of all 109 coaches and the Python file used to compute the coach statistics can be found in `03_coach_hazard_effects.csv` and `coach_effects.py`
+
+## Surrendering in the NBA happens far more than it used to
+During the 5 seasons spanning the 1996-97 season to the 2000-01 season, 22.8% of games involved at least one team surrendering. 25 years later however (2020-21 to 2025-26), a surrender event now happens in 36.6% of all games. Correlation with season +0.880.
+
+| Season |   n | Events per game | Median margin | Median min left |
+|--------|----:|----------------:|--------------:|----------------:|
+| 1996-97   | 339 |           0.285 |            21 |             3.9 |
+| 1997-98   | 347 |           0.292 |            21 |             3.4 |
+| 1998-99   | 211 |           0.291 |            20 |             3.0 |
+| 1999-00   | 365 |           0.307 |            20 |             3.7 |
+| 2000-01   | 326 |           0.274 |            20 |             3.9 |
+| ...       | ... |           ... |           ...|             ... |
+| 2021-22   | 620 |           0.504 |            21 |             3.5 |
+| 2022-23   | 553 |           0.450 |            20 |             3.4 |
+| 2023-24   | 705 |           0.573 |            21 |             3.5 |
+| 2024-25   | 677 |           0.550 |            21 |             3.4 |
+| 2025-26   | 673 |           0.545 |            21 |             3.7 |
+
+What is surprising is that the median margin at surrender has been at roughly 21 points for thirty years. Coaches are not quitting earlier within a given blowout as their threshold is identical, its just that the number of situations calling for it grew. This could support the argument that the league as a whole is getting less competitive as more games result in blowouts.
+
+## Variables that do and don't matter in determining surrender odds
+
+By identifying three variables that potentially influence a coach's decision to surrender and conducting statistical analysis on the effects, it can be seen that only one of the three parameters can be shown to have a real effect.
+
+| Predictor                        |    OR |        95% CI |     z | Real effect? |
+|----------------------------------|------:|--------------:|------:|--------------|
+| Own team strength (per SRS point) | 1.101 | [1.094, 1.109] | +28.9 | yes         |
+| Playing at home                   | 1.026 | [0.967, 1.088] |  +0.8 | no          |
+| Opponent strength (per SRS point) | 0.998 | [0.991, 1.004] |  -0.7 | no          |
+
+ Playing at home has no effect on coach's decision to surrender. Which is surprising as home-court advantage is one of the most studied aspects in all of sports. It raises scoring rates (Ribeiro et al., 2016), inflates subjective stat-keeping (Bommela et al.,2021), and bends officiating (Price, Remer & Stone, 2012). Home court advantage turns up almost everywhere, but does not change a coach's tendency to surrender. On average, there doesn't seem to be any embarrassment effect in front of your own crowd, nor extra push for the home fans who bought tickets. 
+
+Opponent quality is irrelevant too, suggesting that coaches respond to their own position rather than to who is beating them. What does matter is the strength of your own team. Coaches of good teams give up on games more quickly than bad ones, which may seem counterintuitive at first, but a good team's bench is deeper, so emptying it costs less, and the star player of a good team would be more valuable to rest and protect.
 
 # Conclusion, Limitations, and Where This Goes
 
@@ -189,13 +136,11 @@ The full ranking of all 109 coaches and the Python file used to compute the coac
 Four findings:
 1. Coaches quit on a curve and the threshold scales with the amount of time left. Coaches need, on average, a 26 point differential to surrender at twelve minutes, and 14 at two. The leading coach consistently waits two to three points longer than the trailing one due to asymmetric risk. 
 
-2. Surrendering has become far more common, but not because coaches tendency changed. The share of games with at least one surrender rose from 22.8% to 36.6%. Yet the median margin at surrender has remained at around 21 points the entire time. Coaches did not lower their standards to surrender. The league produced more blowouts meeting them.
+2. Coaches differ enormously in whether they concede based on their coaching style. Hazard ratios differ by 8x at the most extreme, but among games where a coach did surrender, the timing difference is extremely small.
 
-3. The decision spreads between coaches on the same game. Once an opponent has emptied his, a coach's odds of following are multiplied by 1.49, and the effect is more concentrated where the window is narrow, reaching 2.29 at one minute left. 
+3. Surrendering has become far more common, but not because coaches tendency changed. The share of games with at least one surrender rose from 22.8% to 36.6%. Yet the median margin at surrender has remained at around 21 points the entire time. Coaches did not lower their standards to surrender. The league produced more blowouts meeting them.
 
 4. Playing at home has no effect on coaches' surrender tendency, and neither does the strength of the opponent. What does matter is a coach's own team as stronger teams give up sooner.
-
-5. Coaches differ enormously in whether they concede based on their coaching style. Hazard ratios differ by 8.5x at the most extreme, but among games where a coach did surrender, the timing difference is extremely small.
 
 ## Limitations
 
@@ -203,11 +148,9 @@ Four findings:
 
 2. The four-minute filter on measuring differences in coach tendency is arbitrary. The surrender rate increases smoothly through 0.4%, 8.0%, 39.8% and 57.9% with no natural break. However, looking at the correlations against the four-minute version result in 1.000, 1.000, 0.978 and 0.929 at two, three, six and eight minutes respectively. Therefore, the threshold choice does not impact the results findings significantly, but it is still relevant to mention as a limitation. 
 
-3. The contagion result is not proven to be a mechanism. We know only the odds of whether the opponent had withdrawn, but not if a coach was actually influenced by the opposing coach or both coaches read the same scoreboard and came to the same conclusion independently. 
+3. The data is partially incomplete. As the substitutions are not all recorded. Using the best available CSV files of NBA play-by-play data, a few games had incomplete data about substitutions. Games with less than 15 substitutions (median is 20) were excluded from analysis. This lack of data affects older seasons more significantly, with only 74% of 1996-97 team games passing the test, while 98.7% in 2025-26. Which could create bias in the "surrender is happening more" claim. 
 
-4. The data is partially incomplete. As the substitutions are not all recorded. Using the best available CSV files of NBA play-by-play data, a few games had incomplete data about substitutions. Games with less than 15 substitutions (median is 20) were excluded from analysis. This lack of data affects older seasons more significantly, with only 74% of 1996-97 team games passing the test, while 98.7% in 2025-26. Which could create bias in the "surrender is happening more" claim. 
-
-5. Team strength is contaminated by the outcome. Basketball's own SRS metric is built from point margin, and point margin is compressed by the behaviour under study. A leading coach emptying his bench costs about 1.2 points off the final margin. The contamination is small against a 4.6 point standard deviation, but the circularity exists.
+4. Team strength is contaminated by the outcome. Basketball's own SRS metric is built from point margin, and point margin is compressed by the behaviour under study. A leading coach emptying his bench costs about 1.2 points off the final margin. The contamination is small against a 4.6 point standard deviation, but the circularity exists.
 
 ## Why it Matters, and Where it Leads 
 
@@ -217,4 +160,3 @@ Approximately one game in three is now abandoned by at least one side. In the la
 
 
 None of this indicates suboptimal coaching. Conceding a decided game carries no measurable cost and protects a valuable asset, so the observed behaviour is consistent with rational play. The eightfold spread between coaches persists precisely because the decision is unconstrained: absent cost or sanction, individual variation goes unsuppressed. It follows that the behaviour will not change without a change in incentives, and that no rule aimed at rosters or at absence from whole games will touch it.
-
