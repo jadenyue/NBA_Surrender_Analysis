@@ -30,20 +30,22 @@ By looking at the final score of every trailing team that never pulled its start
 | 5 to 7 | 3,815 | 0.8% |
 | 7 and above | 13,855 | 0.0% |
 
-A required comeback rate of 1 to 1.5 is a coin flip, where as when the required comback rate passes five, the comeback becomes substantially rarer.
+A required comeback rate of 1 to 1.5 is a coin flip, whereas when the required comback rate exceeds 5, the comeback becomes substantially rarer.
 
 
-## Do coaches actually differ?
+## Do coaches differ in their tendency to surrender?
 
 Across 139 coaches with at least 60 trailing games, covering 42,278 team-games, at least one team surrenders in 11.1% of them.
 
-The obvious test is to compare each coach against that 11.1%. But coaches worked in different decades and with different rosters, and both of those change how often a team ends up conceding. A coach in 2025 on a terrible team is going to concede more than one in 1999 on a good team, even if the two men think about the decision identically. Comparing both to a single league average would score that difference as coaching.
+The initial idea would be to test and compare each coach against that 11.1%. But coaches worked in different decades and with different rosters, and both of those affect how often a team ends up conceding. Brian Keefe coaching the 17 win Wizards in 2025-26 is going to concede more than Steve Kerr coaching the 73 win Warriors in 2016-17, just because Keefe would be in more situations where surrender would be considered, even if the two men actually think about the decision identically. Comparing both to this single league average would measure that difference as coaching.
 
-So the fairer question is not whether a coach differs from the league. It is whether he differs from what his own circumstances predict.
+So the fairer measure is not whether a coach's surrender tendancy differs from the league. It is whether he differs from what his own circumstances predict.
 
 ### Building each coach's expectation
 
 To get that, we fit a model that predicts the chance of conceding using only the season and the team's SRS:
+
+Note: SRS Simple Rating System is the team strength measurement developed by Basketball Reference. It looks at margin of victory/loss adjusted for opponent strength. The highest SRS of a team was the 1970-71 Bucks with 11.92. 
 
 ```
 logit P(concede) = intercept + season dummies + b x team SRS
