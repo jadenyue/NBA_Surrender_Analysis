@@ -1,162 +1,293 @@
-# NBA Surrender Analysis - When coaches give up
-A study and statistical analysis of NBA coach's tendency to "surrender " in games. Built from substitution-level play-by-play records across 30 seasons: 12,996 events, 1996-97 to 2025-26, across 109 coaches. 
-The moment a coach makes the decision to surrender is when the **last of his five starters leaves the floor and does not come back**. Analysing the accumulated data on this event revealed several interesting phenomena and trends that point towards where the league is headed. 
-# What I found
-## The Surrender Curve
-NBA coaches decide to quit not at a fixed deficit, but make their decision based on score differential and time left in the game. The margin they need scales with how much time is left to for the score to be equalised.  
-By modelling the relationship, we create the surrender curve to represent the typical point differential at which a coach decides to surrender for each time remaining. 
-| Min remaining |     n | Trailing | Leading |
-|---------------|------:|---------:|--------:|
-| 0-2           | 3,166 |       14 |      16 |
-| 2-3           | 2,223 |       18 |      20 |
-| 3-4           | 1,718 |       20 |      22 |
-| 4-5           | 1,253 |       21 |      24 |
-| 5-6           | 1,018 |       23 |      26 |
-| 6-8           | 1,198 |       25 |      27 |
-| 8-10          |   694 |       26 |      29 | 
-| 10-12         |   231 |       27 |      29 |
-| 12+           | 1,495 |       25 |      28 |
+# How hopeless does it have to get before a coach gives up?
 
-The full derivation of these counts can be found in `margin_by_clock.py`
+Some coaches empty the bench the moment a game slips away. Others ride their starters through a forty point deficit. This is a measure of that difference, built from 29 seasons of NBA play-by-play, 1996-97 to 2024-25.
 
-It can also be noted that at every min remaining point, the leading coach waits two to three points longer than the trailing one. The reason is asymmetric risk: conceding a loss costs nothing, but losing after calling off a lead is never a good look.
 
-## Different coaches differ in their tendency to surrender enormously 
-This was the question that initially inspired this study: finding the differences in how reactive a coach is to surrender.
+## The scale
 
-The obvious way to measure this is to count the share of decided games in which each coach ends with his starters off. However, this fails to account for the vast differences in surrender window. 
+AS the trailing team, the deficit severity is measured by how many points per minute the team would have to gain on the opponent to tie the game at the buzzer.
 
-| Game was settled for | Share of teams who pulled |
-|----------------------|--------------------------:|
-| under 1 minute       |                      0.4% |
-| 1–4 minutes          |                      8.0% |
-| 4–8 minutes          |                     39.8% |
-| 8+ minutes           |                      57.9% |
-
-A coach whose games happened to be settled early would have a high raw percentage without having a quicker tendency to act. 
-
-This issue can be solved by using a discrete-time hazard model. Every settled team-game is split into 30 second intervals, and each interval is marked as 1 or 0 based on if the coach pulled the starters during this one, given the coach hadn't yet. Because every interval is the same length, having more of them cannot inflate the effect.
-
-Additionally, Only games with at least 4 minutes remaining when settled were included. This filter is necessary as bad teams get disproportionally blown out while also pulling their starters far less than winning teams (41% vs 55%). So a coach of a bad team accumulates a pile of games where the team is getting blown out early, and in those he rarely withdraws. That drags his estimate toward zero without any connection to his actual tendency. 
-
-If no minimum window is implemented, the failure can be seen below:
-| Coach        | Season  | Team record     | Team SRS | Games coached |   HR | %pull |  n |
-|--------------|---------|-----------------|---------:|---------------|-----:|------:|---:|
-| Bill Hanzlik | 1997-98 | Denver 11–71    |   −11.74 | 82 of 82      | 0.09 |    2% | 82 |
-| Mike Dunlap  | 2012-13 | Charlotte 21–61 |    −9.29 | 82 of 82      | 0.11 |    2% | 82 |
-| Ed Tapscott  | 2008-09 | Washington 19–63 |   −6.98 | 71 of 82      | 0.14 |    3% | 71 |
-| Dick Motta   | 1996-97 | Denver 21–61    |    −6.40 | 69 of 82      | 0.18 |    3% | 69 |
-| M.L. Carr    | 1996-97 | Boston 15–67    |    −6.62 | 82 of 82      | 0.30 |    5% | 82 |
-
-The coaches that seem to surrender the most are five one-season coaches of terrible teams, and the ranking becomes a list of bad teams rather than an actual measure of coaches' tendency.
-
-With the minimum window of 4 minutes:
-|                              |   Value |
-|------------------------------|--------:|
-| Settled team-games           |  23,328 |
-| Coach-attributed             |  22,145 |
-| Half-minute intervals        | 270,832 |
-| Intervals ending in a pull   |  10,085 |
-| Baseline chance per interval |   3.72% |
-
-Fitting to the model
 ```
-logit(chance of pulling in interval k) = α_k + β_coach + γ × [eventual winner]
+required comeback rate = deficit / minutes remaining      (points per minute)
 ```
-Where: 
-|           | Meaning                                                                                                    |
-|-----------|------------------------------------------------------------------------------------------------------------|
-| `α_k`     | a free parameter per interval index - lets the model learn how the urge builds over settled time, without assuming a shape |
-| `β_coach` | each coach's own adjustment; `exp(β)` is his hazard ratio                                                   |
-| `γ`       | winners pull faster than losers: +0.286, z = +13.1                    
 
-Looking at the 109 coaches that have coached at least 60 settled games:
+Down 20 with 5 minutes left means the losing team needs to gain 4 points every minute. This can be achieved by either outscoring the opposing team 6 to 2, or 4 to 0.
 
-Quickest to surrender
-| Coach            |   HR |       95% CI |    z | Median wait (min) | %pull |   n |
-|------------------|-----:|-------------:|-----:|------------:|------:|----:|
-| Darvin Ham       | 2.36 | [1.66, 3.35] | +4.8 |        4.17 |   77% |  60 |
-| Ime Udoka        | 2.23 | [1.70, 2.93] | +5.8 |        4.35 |   82% | 125 |
-| Chris Finch      | 2.14 | [1.65, 2.76] | +5.8 |        4.88 |   82% | 151 |
-| Nick Nurse       | 1.88 | [1.47, 2.40] | +5.1 |        5.13 |   72% | 215 |
-| Mike Budenholzer | 1.86 | [1.48, 2.34] | +5.3 |        4.90 |   70% | 300 |
-| Phil Jackson     | 1.67 | [1.34, 2.10] | +4.5 |        5.28 |   65% | 346 |
+An NBA team scores about 2.4 points per minute, so a rate of 2.4 means you need to gain a whole team's worth of scoring every minute, on top of whatever they score.
+
+By looking at the final score of every trailing team that never pulled its starters and finding the worst position it faced, we can see the proportion that came back and won:
+
+| Peak rate faced | Team-games | Came back and won |
+| --- | ---: | ---: |
+| 0 to 0.5 | 10,862 | 81.5% |
+| 0.5 to 1 | 5,496 | 66.6% |
+| 1 to 1.5 | 2,254 | 50.5% |
+| 1.5 to 2 | 1,161 | 36.6% |
+| 2 to 2.5 | 834 | 26.6% |
+| 2.5 to 3 | 583 | 16.0% |
+| 3 to 4 | 1,005 | 7.5% |
+| 4 to 5 | 1,091 | 4.6% |
+| 5 to 7 | 3,815 | 0.8% |
+| 7 and above | 13,855 | 0.0% |
+
+A required comeback rate of 1 to 1.5 is a coin flip, where as when the required comback rate passes five, the comeback becomes substantially rarer.
 
 
-Slowest:
-| Coach         |   HR |       95% CI |    z | Median wait (min) | %pull |   n |
-|---------------|-----:|-------------:|-----:|------------:|------:|----:|
-| Rick Pitino   | 0.29 | [0.17, 0.49] | −4.6 |       never |   15% |  97 |
-| Sidney Lowe   | 0.31 | [0.17, 0.58] | −3.7 |       never |   18% |  60 |
-| George Karl   | 0.36 | [0.28, 0.48] | −7.2 |        21.2 |   22% | 411 |
-| David Fizdale | 0.42 | [0.26, 0.69] | −3.4 |        19.1 |   25% |  73 |
-| Doug Collins  | 0.51 | [0.37, 0.72] | −3.9 |        13.1 |   28% | 170 |
-| Mike D'Antoni | 0.52 | [0.40, 0.68] | −4.9 |        13.1 |   31% | 348 |
+## Do coaches actually differ?
 
-Ham and Pitino differ by ≈8x in their hazard ratio. So in theory, if these two coaches were in the same situation: same score, same clock, same time since the game stopped being competitive, Ham is roughly 8 times more likely than Pitino to surrender in the next thirty seconds.
+Across 139 coaches with at least 60 trailing games, covering 42,278 team-games, at least one team surrenders in 11.1% of them.
 
-The full ranking of all 109 coaches and the Python file used to compute the coach statistics can be found in `03_coach_hazard_effects.csv` and `coach_effects.py`
+The obvious test is to compare each coach against that 11.1%. But coaches worked in different decades and with different rosters, and both of those change how often a team ends up conceding. A coach in 2025 on a terrible team is going to concede more than one in 1999 on a good team, even if the two men think about the decision identically. Comparing both to a single league average would score that difference as coaching.
 
-## Surrendering in the NBA happens far more than it used to
-During the 5 seasons spanning the 1996-97 season to the 2000-01 season, 22.8% of games involved at least one team surrendering. 25 years later however (2020-21 to 2025-26), a surrender event now happens in 36.6% of all games. Correlation with season +0.880.
+So the fairer question is not whether a coach differs from the league. It is whether he differs from what his own circumstances predict.
 
-| Season |   n | Events per game | Median margin | Median min left |
-|--------|----:|----------------:|--------------:|----------------:|
-| 1996-97   | 339 |           0.285 |            21 |             3.9 |
-| 1997-98   | 347 |           0.292 |            21 |             3.4 |
-| 1998-99   | 211 |           0.291 |            20 |             3.0 |
-| 1999-00   | 365 |           0.307 |            20 |             3.7 |
-| 2000-01   | 326 |           0.274 |            20 |             3.9 |
-| ...       | ... |           ... |           ...|             ... |
-| 2021-22   | 620 |           0.504 |            21 |             3.5 |
-| 2022-23   | 553 |           0.450 |            20 |             3.4 |
-| 2023-24   | 705 |           0.573 |            21 |             3.5 |
-| 2024-25   | 677 |           0.550 |            21 |             3.4 |
-| 2025-26   | 673 |           0.545 |            21 |             3.7 |
+### Building each coach's expectation
 
-What is surprising is that the median margin at surrender has been at roughly 21 points for thirty years. Coaches are not quitting earlier within a given blowout as their threshold is identical, its just that the number of situations calling for it grew. This could support the argument that the league as a whole is getting less competitive as more games result in blowouts.
+To get that, we fit a model that predicts the chance of conceding using only the season and the team's SRS:
 
-## Variables that do and don't matter in determining surrender odds
+```
+logit P(concede) = intercept + season dummies + b x team SRS
+```
 
-By identifying three variables that potentially influence a coach's decision to surrender and conducting statistical analysis on the effects, it can be seen that only one of the three parameters can be shown to have a real effect.
+The season dummies give every year its own baseline, which soaks up the fact that conceding became much more common over thirty seasons. The SRS term handles roster quality. Critically, the model has no coach variable in it at all. It is being asked to predict as well as it can while blind to who was in charge.
 
-| Predictor                        |    OR |        95% CI |     z | Real effect? |
-|----------------------------------|------:|--------------:|------:|--------------|
-| Own team strength (per SRS point) | 1.101 | [1.094, 1.109] | +28.9 | yes         |
-| Playing at home                   | 1.026 | [0.967, 1.088] |  +0.8 | no          |
-| Opponent strength (per SRS point) | 0.998 | [0.991, 1.004] |  -0.7 | no          |
+Every one of the 42,278 games then gets its own predicted probability. A game in 2025 on a bad roster might come out at 21%, and one in 2006 on a decent roster at 9%.
 
- Playing at home has no effect on coach's decision to surrender. Which is surprising as home-court advantage is one of the most studied aspects in all of sports. It raises scoring rates (Ribeiro et al., 2016), inflates subjective stat-keeping (Bommela et al.,2021), and bends officiating (Price, Remer & Stone, 2012). Home court advantage turns up almost everywhere, but does not change a coach's tendency to surrender. On average, there doesn't seem to be any embarrassment effect in front of your own crowd, nor extra push for the home fans who bought tickets. 
+Add up those predictions for a single coach and you get the number of concessions his circumstances imply:
 
-Opponent quality is irrelevant too, suggesting that coaches respond to their own position rather than to who is beating them. What does matter is the strength of your own team. Coaches of good teams give up on games more quickly than bad ones, which may seem counterintuitive at first, but a good team's bench is deeper, so emptying it costs less, and the star player of a good team would be more valuable to rest and protect.
+| Coach | Games | Conceded | Expected | Mean SRS | Mean year |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| George Karl | 823 | 27 | 73.3 | +2.32 | 2006 |
+| Mike D'Antoni | 727 | 33 | 70.1 | +1.26 | 2010 |
+| Erik Spoelstra | 790 | 48 | 99.3 | +2.90 | 2016 |
+| Gregg Popovich | 1,157 | 140 | 125.6 | +2.82 | 2012 |
+| Rick Adelman | 759 | 111 | 66.7 | +1.90 | 2006 |
+| Stephen Silas | 201 | 53 | 34.1 | −7.80 | 2022 |
+| Brian Keefe | 93 | 31 | 19.2 | −11.31 | 2025 |
 
-# Conclusion, Limitations, and Where This Goes
+You can see the adjustment doing its job. Brian Keefe coached in 2025 on a roster eleven points below average, which is about the most concede-prone combination there is, so he is expected to concede 19 times rather than the 10 a flat league rate would have implied. George Karl worked earlier with better teams, so his expectation drops to 73.
 
-## Conclusion
-Four findings:
-1. Coaches quit on a curve and the threshold scales with the amount of time left. Coaches need, on average, a 26 point differential to surrender at twelve minutes, and 14 at two. The leading coach consistently waits two to three points longer than the trailing one due to asymmetric risk. 
+### The test
 
-2. Coaches differ enormously in whether they concede based on their coaching style. Hazard ratios differ by 8x at the most extreme, but among games where a coach did surrender, the timing difference is extremely small.
+Now compare each coach's actual count against his own expectation:
 
-3. Surrendering has become far more common, but not because coaches tendency changed. The share of games with at least one surrender rose from 22.8% to 36.6%. Yet the median margin at surrender has remained at around 21 points the entire time. Coaches did not lower their standards to surrender. The league produced more blowouts meeting them.
+```
+chi-square = 433 on 138 degrees of freedom,  p = 3.0 x 10^-32
+```
 
-4. Playing at home has no effect on coaches' surrender tendency, and neither does the strength of the opponent. What does matter is a coach's own team as stronger teams give up sooner.
+The number to compare against is 138, which is what this statistic would land near if coaches added nothing beyond era and roster. It lands at 433 instead, so coaches clearly do carry information of their own.
+
+But it is worth asking where that 433 comes from, because the answer changes how you read it. Six coaches account for 147 of it:
+
+| Coach | Conceded | Expected | Contribution |
+| --- | ---: | ---: | ---: |
+| Rick Adelman | 111 | 66.7 | 29.4 |
+| George Karl | 27 | 73.3 | 29.2 |
+| Erik Spoelstra | 48 | 99.3 | 26.5 |
+| Dwane Casey | 42 | 90.2 | 25.7 |
+| Mike D'Antoni | 33 | 70.1 | 19.7 |
+| Chuck Daly | 17 | 6.6 | 16.1 |
+
+So this is not 139 coaches each being a little bit different. It is a handful of real outliers, with most coaches landing close to what their circumstances predict. Karl conceding 27 times where 73 was expected, and Spoelstra 48 where 99 was expected, are gaps that noise does not produce.
+
+## How much of the difference is real
+
+The chi-square tells you the differences exist. It says nothing about how big they are.
+
+For that, split the observed variation in concede rates into three parts:
+
+| Source | Variance | Share |
+| --- | ---: | ---: |
+| Era and roster | 0.00098 | 36% |
+| Sampling noise | 0.00056 | 20% |
+| The coach | 0.00123 | 44% |
+| Total observed | 0.00277 | 100% |
+
+Just over a third of the raw spread between coaches comes from era and roster. Another fifth is small samples. What is left over, 44%, is the coach.
+
+Converting that back to a rate gives a genuine between-coach standard deviation of 3.5 percentage points, around a league mean of 11.1%. In plain terms, a coach one standard deviation above average concedes about 15% of the time, and one standard deviation below about 8%.
+
+## Most willing to concede
+
+These rankings use conceded divided by expected, so 1.66 means a coach conceded two thirds more often than his era and rosters imply. Restricted to coaches with 100 or more trailing games.
+
+| Coach | Conceded | Expected | Obs / exp | Games | Mean SRS | Mean year |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Rick Adelman | 111 | 66.7 | 1.66 | 759 | +1.9 | 2006 |
+| Rudy Tomjanovich | 56 | 34.3 | 1.63 | 413 | −0.0 | 2001 |
+| Paul Silas | 34 | 21.4 | 1.59 | 220 | −5.6 | 2008 |
+| Stephen Silas | 53 | 34.1 | 1.55 | 201 | −7.8 | 2022 |
+| Wes Unseld | 44 | 28.8 | 1.53 | 168 | −4.0 | 2023 |
+| Lenny Wilkens | 54 | 35.7 | 1.51 | 424 | −0.9 | 2001 |
+| Kurt Rambis | 23 | 15.2 | 1.51 | 165 | −6.2 | 2009 |
+| Jim Boylen | 20 | 13.3 | 1.50 | 101 | −6.1 | 2020 |
+
+## Least willing to concede
+
+| Coach | Conceded | Expected | Obs / exp | Games | Mean SRS | Mean year |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| George Karl | 27 | 73.3 | 0.37 | 823 | +2.3 | 2006 |
+| Larry Bird | 4 | 9.4 | 0.43 | 120 | +4.8 | 1999 |
+| Dwane Casey | 42 | 90.2 | 0.47 | 704 | −1.8 | 2016 |
+| Mike D'Antoni | 33 | 70.1 | 0.47 | 727 | +1.3 | 2010 |
+| Erik Spoelstra | 48 | 99.3 | 0.48 | 790 | +1.7 | 2017 |
+| Isiah Thomas | 13 | 26.9 | 0.48 | 287 | −2.0 | 2005 |
+| Butch Carter | 5 | 10.3 | 0.49 | 119 | −2.4 | 1999 |
+| Rick Pitino | 8 | 15.7 | 0.51 | 185 | −1.7 | 1999 |
+
+George Karl is the most solid entry in either table. On 823 trailing games, the largest sample here, he conceded at just over a third of the rate his circumstances imply. Mike D'Antoni once sat through a position requiring 48.8 points per minute, which is roughly down 49 with a minute to play, and still did not pull his starters.
+
+The adjustment changes who appears. Chauncey Billups and Taylor Jenkins were near the top on raw rates but drop out here, because most of what looked like willingness was really just coaching recent teams. Stephen Silas and Wes Unseld stay, because their rates are high even after allowing for weak modern rosters.
+
+## Where the halfway point falls
+
+A Kaplan-Meier curve tracks what share of a coach's trailing games are still unconceded as the required comeback rate climbs. Its median is the rate at which half his trailing games have ended in surrender.
+
+Only 10 of 139 coaches ever reach a median. For the other 129 the curve never falls to half, because more than half their trailing games end with the starters still on the floor no matter how hopeless it got.
+
+| Coach | KM median (pts/min) | % conceded | n |
+| --- | ---: | ---: | ---: |
+| Joe Mazzulla | 8.47 | 18% | 108 |
+| Darvin Ham | 10.91 | 23% | 108 |
+| Ime Udoka | 10.91 | 19% | 128 |
+| Chris Finch | 13.33 | 18% | 226 |
+| Brian Keefe | 13.43 | 33% | 93 |
+| Wes Unseld | 13.85 | 26% | 168 |
+| Taylor Jenkins | 14.16 | 23% | 293 |
+| Mike Budenholzer | 14.79 | 19% | 444 |
+| Tom Thibodeau | 20.00 | 11% | 562 |
+| James Borrego | 26.90 | 15% | 238 |
+
+That 129 of 139 never reach a median is the finding, not a hole in the data. Most NBA coaches essentially never concede while trailing, at any deficit, and the ones who do are exceptions.
+
+These medians are raw rather than adjusted, so some of the pattern is era. Mazzulla, Ham, Udoka, Finch, Keefe, Unseld, Jenkins and Borrego are almost all currently active, which fits the idea that conceding while behind is a modern behaviour.
+
+## Is it the coach or the roster?
+
+The adjustment above already removes era and roster when comparing one coach to another. A different question is whether a coach's tendency is stable at all, or whether the same man behaves differently as his circumstances change.
+
+Three tests look at that, each using a different kind of variation within a single coach.
+
+### The same coach with a stronger or weaker roster
+
+Take 76 coaches who lasted four or more seasons and had real variation in roster quality. Subtract each coach's own average, so all that remains is how he moved from year to year:
+
+```
+within-coach slope: -0.143 percentage points of concede rate per SRS point
+                    SE 0.057, t = -2.49, n = 675 coach-seasons
+```
+
+The sign is the interesting part. Give the same coach a better roster and he concedes less often when trailing, by about 1.4 percentage points per ten SRS points. That makes sense. A good team that is behind has more reason to think it can come back, so the coach leaves his starters out there.
+
+This might look like it contradicts the familiar idea that strong teams empty their benches more. It does not, because that idea is about all decided games including the ones being won. The two behaviours run in opposite directions. A strong team concedes less readily when behind and calls off wins more readily when ahead. Only the trailing half is measured here.
+
+### The same coach at different franchises
+
+Sixty coaches worked at two or more clubs with at least 60 trailing games at each. Pair each coach's rate at his main club against the weighted average of his others, then correlate across coaches:
+
+```
+r = +0.306, 95% CI [+0.084, +0.502], 3,000 bootstrap resamples over coaches
+```
+
+The interval excludes zero, so something personal does travel with the man. For comparison, the correlation of roster strength across the same coaches' clubs is +0.233, meaning a coach's tendency follows him slightly better than his luck with rosters does.
+
+The effect is moderate though, and the individual cases show why:
+
+| Coach | Weak roster | Strong roster | SRS gap |
+| --- | --- | --- | ---: |
+| Monty Williams | DET −9.1 → 11% | PHX +3.5 → 16% | 12.6 |
+| Avery Johnson | NJN −6.3 → 14% | DAL +5.9 → 10% | 12.3 |
+| Flip Saunders | WAS −6.0 → 11% | DET +5.3 → 12% | 11.3 |
+| Larry Brown | NYK −6.3 → 10% | DET +4.2 → 3% | 10.5 |
+| Larry Drew | CLE −9.4 → 3% | ATL +0.2 → 20% | 9.6 |
+| George Karl | SAC −2.3 → 0% | SEA +6.6 → 5% | 8.9 |
+| Paul Silas | CHA −10.3 → 18% | CLE −1.5 → 14% | 8.8 |
+| Rick Adelman | GSW −4.9 → 24% | SAC +3.9 → 13% | 8.8 |
+
+Flip Saunders is the cleanest case of a coach whose tendency is his own. He ran 11% on a −6.0 Washington roster and 12% on a +5.3 Detroit one, so an eleven point swing in team quality moved him by a single point.
+
+Larry Drew is the opposite, at 3% with Cleveland and 20% with Atlanta. Larry Brown ran 10% in New York and 3% in Detroit. For these two the number is clearly not a fixed trait.
+
+Across all 60 movers, the average absolute change between clubs is 4.5 percentage points, against a coach-attributable standard deviation of 3.5. So changing clubs typically moves a coach more than the entire league varies.
+
+### The same coach at the same club over many years
+
+This is the cleanest test available. Hold both the man and the franchise fixed, and let the roster change underneath him. Fifty-two coach-franchise spells have four or more seasons, 200 or more trailing games, and a real swing in roster quality.
+
+| Coach | Team | Seasons | Games | SRS range | Concede range | Overall |
+| --- | --- | ---: | ---: | --- | --- | ---: |
+| Gregg Popovich | SAS | 26 | 1,134 | −9.8 to +10.3 | 11% to 27% | 12.0% |
+| Erik Spoelstra | MIA | 16 | 790 | −2.9 to +7.0 | 10% to 11% | 6.1% |
+| Jerry Sloan | UTA | 15 | 719 | −3.7 to +8.0 | 3% to 5% | 9.2% |
+| Rick Carlisle | DAL | 12 | 615 | −2.7 to +4.9 | 8% to 11% | 14.3% |
+| Phil Jackson | LAL | 11 | 497 | +0.2 to +8.4 | 5% to 9% | 7.4% |
+| Pat Riley | MIA | 10 | 483 | −8.5 to +5.6 | 0% to 6% | 7.9% |
+| Steve Kerr | GSW | 10 | 453 | −8.1 to +10.4 | 4% to 6% | 9.3% |
+| Doc Rivers | BOS | 9 | 428 | −3.7 to +9.3 | 6% to 6% | 8.9% |
+| Michael Malone | DEN | 9 | 418 | −2.8 to +5.2 | 2% to 16% | 15.3% |
+
+Read the concede range against the SRS range beside it. Doc Rivers went 6% to 6% while Boston's roster swung thirteen points. Spoelstra ran 10% to 11% while Miami moved ten. Steve Kerr held 4% to 6% while Golden State swung eighteen and a half points, from the pre-Curry era to the 73 win team. These are coaches whose tendency is genuinely their own.
+
+Michael Malone is the counterexample, running 2% to 16% at a single club. Popovich spans 11% to 27%, though over twenty-six seasons that is a career rather than a tendency.
+
+Averaged across all 52 spells, the correlation between a season's roster strength and that season's concede rate is +0.116, which is close to nothing. Roster quality is not what moves a coach's number within a club.
+
+### What the three tests say together
+
+The tendency is partly personal and substantially circumstantial.
+
+It travels between clubs at r = +0.306, which is real but moderate. Roster strength moves a coach only slightly, and in the opposite direction to what you might guess. And then there is the figure that settles it. The average season to season swing within one coach at one club is 14.0 percentage points, while the coach-attributable spread across the whole league is 3.5.
+
+One man at one club varies far more between seasons than the league varies between men. So reading any single coach's number as a fixed personal trait is overreaching. What the data supports is that coaches differ on average, that a few like Rivers, Spoelstra, Kerr and Sloan are strikingly consistent, and that most are not.
+
+## The most hopeless positions ever tolerated
+
+| Season | Team | Down by | Min left | Rate needed |
+| --- | --- | ---: | ---: | ---: |
+| 2021-22 | OKC | 75 | 1.07 | 70.3 |
+| 2023-24 | POR | 62 | 1.03 | 60.0 |
+| 2023-24 | POR | 57 | 1.00 | 57.0 |
+| 2022-23 | POR | 56 | 1.00 | 56.0 |
+| 2020-21 | OKC | 57 | 1.07 | 53.4 |
+
+Oklahoma City sat through being down 75 with a minute left, starters still on the floor. That is the Memphis 152-79 game, the largest margin of victory in NBA history.
+
+## What statistics this uses
+
+Very little, deliberately.
+
+| Step | Method |
+| --- | --- |
+| Required comeback rate | division |
+| Peak rate for non-conceders | a maximum |
+| Share conceded | a proportion |
+| Expected count per coach | logistic regression on season and SRS, no coach term |
+| Do coaches differ | one chi-square test |
+| How much spread is real | variance subtraction |
+| Where the halfway point falls | Kaplan-Meier, non-parametric |
+
+The only fitted model is the one that builds each coach's expectation, and it exists for one reason, which is to compare coaches against their own circumstances rather than against a league average. Everything else is arithmetic you could check by hand from the counts.
+
+One design choice is worth flagging. Adjusting for how much opportunity a coach had usually needs a model, but here it is built into the definition instead. Recording the worst position a coach faced, rather than just how long he waited, puts a coach whose games never got hopeless on the same footing as one whose did. That works in practice: the correlation between how often a coach concedes and how severe his trailing games got is -0.058, which is essentially zero.
+
+## Validation
+
+Every conceded row was cross-checked against an independently built surrender-event file. On the 5,103 events present in both, the score margin and the clock reading match exactly, at 100% on each with a maximum difference of zero. The 378 reference events absent here are all explained by the two stated filters, being 49 below a 6 point deficit and 329 inside the final minute. None is unexplained, and there are no rows here that the reference lacks.
+
+That audit also caught two real errors. Time is not monotonic in the feed's own event ordering, running backwards at some point in 90% of games. An early version used a binary search on the timestamp column, which assumes sorted input, so it returned the wrong row and corrupted 6% of margins by up to 17 points. The fix separates the two lookups. The score as of the surrender comes from the last row at or before it in the league's own event sequence, while the clock reading comes from the substitution's own timestamp rather than from a neighbouring event.
 
 ## Limitations
 
-1. The event of surrender is inferred rather than observed. Coaches never state their intent of surrender, so the observation of the last permanent exit of five starters is consistent with surrender, but also with injury, ejection, foul trouble, or minute management unrelated to the score itself. 
+1. Intent is inferred rather than observed. The last permanent exit of five starters is consistent with conceding, but also with injury, ejection or foul trouble.
 
-2. The four-minute filter on measuring differences in coach tendency is arbitrary. The surrender rate increases smoothly through 0.4%, 8.0%, 39.8% and 57.9% with no natural break. However, looking at the correlations against the four-minute version result in 1.000, 1.000, 0.978 and 0.929 at two, three, six and eight minutes respectively. Therefore, the threshold choice does not impact the results findings significantly, but it is still relevant to mention as a limitation. 
+2. Censored values are floors rather than estimates. Saying D'Antoni held at 48.8 means he tolerated at least that much. It does not mean that is his threshold, because his games may simply never have got worse.
 
-3. The data is partially incomplete. As the substitutions are not all recorded. Using the best available CSV files of NBA play-by-play data, a few games had incomplete data about substitutions. Games with less than 15 substitutions (median is 20) were excluded from analysis. This lack of data affects older seasons more significantly, with only 74% of 1996-97 team games passing the test, while 98.7% in 2025-26. Which could create bias in the "surrender is happening more" claim. 
+3. The adjustment covers era and roster, but not opponent quality or schedule. A coach who faced stronger opponents more often was in more hopeless positions for reasons that are not him, and that is still sitting inside the residual.
 
-4. Team strength is contaminated by the outcome. Basketball's own SRS metric is built from point margin, and point margin is compressed by the behaviour under study. A leading coach emptying his bench costs about 1.2 points off the final margin. The contamination is small against a 4.6 point standard deviation, but the circularity exists.
+4. The era term is a set of season dummies, which absorbs everything that moved with time including the three point revolution, pace and rule changes, without separating them. It removes era as a confounder but treats it as a black box.
 
-## Why it Matters, and Where it Leads 
+5. There is no uncertainty attached to any individual coach. The chi-square shows that coaches differ overall and the variance subtraction says by how much, but neither gives a range for one man. A rate built on 93 games should be read far more loosely than one built on 823.
 
-The most important finding of the analysis is the surrender rate rising from 22.8% to 36.6% in 30 years while the median margin at surrender remained at roughly 21 points. Had coaches lowered their standards, the required margin would have fallen. The rise therefore reflects a change in the games rather than in the coaching, and it constitutes a behavioural measure of competitive imbalance.
+6. The measure covers trailing teams only. Calling off a win is a different decision with different incentives, and is not included here.
 
-Approximately one game in three is now abandoned by at least one side. In the late 1990s the figure was closer to one in five. Extrapolating the recent slope places the rate above 40% within a decade.
-
-
-None of this indicates suboptimal coaching. Conceding a decided game carries no measurable cost and protects a valuable asset, so the observed behaviour is consistent with rational play. The eightfold spread between coaches persists precisely because the decision is unconstrained: absent cost or sanction, individual variation goes unsuppressed. It follows that the behaviour will not change without a change in incentives, and that no rule aimed at rosters or at absence from whole games will touch it.
+7. 2025-26 is excluded, because that season uses an incompatible feed format requiring a separate parser.
