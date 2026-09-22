@@ -1,4 +1,4 @@
-# How hopeless does it have to get before a coach gives up?
+i# How hopeless does it have to get before a coach gives up?
 
 Some coaches see surrendering as a strategic move to protect their players from injury when a game is hopeless, so they surrender as soon as a game seems out of reach. Others would rather ride their starters through a 40 point deficit than give up. From observation, NBA coaches seem to differ in their tendency to surrender, so in this project I used statistical methods to test that hypothesis and to explore some other phenomena in an often overlooked aspect of basketball.
 
@@ -234,22 +234,22 @@ If coaches were getting softer, the RCR threshold would have fallen. It did not.
 
 *The full season by season series is in `comeback_rate_all.csv`, grouped by the season column.*
 
+
+## Conclusion
+So coaches do inherently differ in how readily they surrender. Faced with the same RCR, in the same era, with a roster of the same quality, the quickest coach is roughly six times more likely to pull his starters than the slowest. Stephen Silas acts at 3.8% of moments where George Karl acts at 0.6%.
+That tendency travels with the coach across different franchises at r = +0.306, and coaches like Isiah Thomas and Doug Collins barely move at all when their roster swings by five SRS points. Others swing by 10 to 17 percentage points depending on what team they walked into, and the median coach who changes clubs moves more than the entire league varies. So a coach's number is a tendency rather than a fixed trait.
+The behaviour is also becoming much more common, with the surrender rate doubling over 29 seasons from 8.3% to 16.9%. What has not changed is the threshold, as the median RCR at surrender has sat at roughly 5.2 the entire time. Coaches are not giving up any earlier than they used to, there are just far more games reaching the point where giving up makes sense.
+
+
 ## Limitations
 
-**Intent is inferred, not observed.** No coach announces that he is giving up. The last permanent exit of five starters is consistent with surrender, but also with injury, ejection, foul trouble, or minute management unrelated to the score. What the data establishes is that these games were effectively over, not what anyone was thinking.
-
-**The RCR recorded for a surrender is not always the worst faced.** If a coach survives an RCR of 5, claws back to 4, then pulls his starters, the record says 4. It is necessary to measure it this way to make the analysis focused on the moment that coaches surrender.
-
-**Values for non-surrenders are floors, not thresholds.** Saying Mike D'Antoni held at an RCR of 48.8 means he tolerated at least that much. It does not mean that is his limit, because his games may have ran out of time before it got worse.
+**Intent is only inferred** No coach announces that he is giving up. The last permanent exit of five starters is indicative of surrender, but could also be due to injury, ejection, foul trouble, or minute management unrelated to the score and wanting to give up. 
 
 **The era control is a set of season dummies**, which absorbs everything that moved with time, including the three point revolution, pace and rule changes, without separating them. It removes era as a confounder but treats it as a black box.
 
-**Each coach gets one hazard ratio applied at every band**, which assumes his effect is constant across all levels of hopelessness. A coach who is quick at an RCR of 3 but stubborn at 10 would be averaged into the middle. That assumption is untested.
+**Each coach gets one hazard ratio applied at every band**, which assumes his effect is constant across all levels of hopelessness. A coach who is quick at an RCR of 3 but stubborn at 10 would be averaged into the middle. 
 
-**Rows within a team-game are not independent**, since the same coach on the same night produces correlated observations. The point estimates are unaffected, but the confidence intervals are somewhat narrower than they should be.
-
-
-** SRS is not a clean control. It is built from point margin, and point margin is affected by surrendering itself, so the control variable and the outcome are not fully independent. It is also a season-level figure, meaning it describes the roster a coach had rather than the team he actually had available on a given night. And it captures quality but not depth, which is arguably the thing that should drive this decision, since the whole question is whether the bench is good enough to finish the game.
+**SRS is not a clean control** It is built from point margin, and point margin is affected by surrendering itself, so the control variable and the outcome are not fully independent. It is also a season-level figure, meaning it describes the roster a coach had rather than the team he actually had available on a given night. And it captures quality but not depth, which is arguably the thing that should drive this decision, since the whole question is whether the bench is good enough to finish the game.
 
 **Play-by-play substitution data is less complete in older seasons.** Team-games with fewer than 15 recorded substitutions were excluded, which affects 1996-97 far more than 2024-25. Since missing substitutions suppress detection, this could bias the historical trend, though two separate checks suggest the trend survives.
 
