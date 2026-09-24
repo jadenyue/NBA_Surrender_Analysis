@@ -1,10 +1,10 @@
-i# How hopeless does it have to get before a coach gives up?
+# How hopeless does it have to get before a coach gives up?
 
-Some coaches see surrendering as a strategic move to protect their players from injury when a game is hopeless, so they surrender as soon as a game seems out of reach. Others would rather ride their starters through a 40 point deficit than give up. From observation, NBA coaches seem to differ in their tendency to surrender, so in this project I used statistical methods to test that hypothesis and to explore some other phenomena in an often overlooked aspect of basketball.
+In the NBA, some coaches see surrendering as a strategic move to protect their players from injury when a game is hopeless, so they surrender as soon as a game seems out of reach. Others would rather ride their starters through a 40 point deficit than give up. From observation, NBA coaches seem to differ in their tendency to surrender, so in this project I used statistical methods to test that hypothesis and to explore some other phenomena in an often overlooked aspect of basketball.
 
-To "surrender" is defined here as the moment a coach withdraws all five of his starters and never brings any of them back.
+The action of "surrender" is defined here as the moment a coach withdraws all five of his starters and never brings any of them back.
 
-The analysis covers 29 seasons of play-by-play data, 1996-97 to 2024-25, across 139 coaches with at least 60 trailing team-games each.
+The analysis covers 29 seasons of play-by-play data, 1996-97 to 2024-25, across 139 coaches with at least 60 trailing team-games each (trailing = at least at one point in the game losing by 6 or more points with at least a minute left to filter for games where a coach benched all his starters because he was winning)
 
 ## The scale
 
@@ -249,8 +249,8 @@ The behaviour is also becoming much more common, with the surrender rate doublin
 
 **Each coach gets one hazard ratio applied at every band**, which assumes his effect is constant across all levels of hopelessness. A coach who is quick at an RCR of 3 but stubborn at 10 would be averaged into the middle. 
 
-**SRS is not a clean control** It is built from point margin, and point margin is affected by surrendering itself, so the control variable and the outcome are not fully independent. It is also a season-level figure, meaning it describes the roster a coach had rather than the team he actually had available on a given night. And it captures quality but not depth, which is arguably the thing that should drive this decision, since the whole question is whether the bench is good enough to finish the game.
+**SRS is not a clean control** It is built from point margin, and point margin is affected by surrendering itself, so the control variable and the outcome are not fully independent. It is also a season-level figure, meaning it describes the roster a coach had rather than the team he actually had available on a particular game. And it captures quality but not team depth.
 
-**Play-by-play substitution data is less complete in older seasons.** Team-games with fewer than 15 recorded substitutions were excluded, which affects 1996-97 far more than 2024-25. Since missing substitutions suppress detection, this could bias the historical trend, though two separate checks suggest the trend survives.
+**Play-by-play substitution data is less complete in older seasons.** Team-games with fewer than 15 recorded substitutions were excluded, which affects 1996-97 far more than 2024-25. Since missing substitutions suppress detection, this could bias the historical trend, though two separate checks suggest the trend is real (The rise in recorded substitutions is real, since the play-by-play counts track an independent official measure of players used per game at r = +0.969. Second, dropping the sparsest logs makes the surrender trend slightly steeper rather than flatter, which is the opposite of what you would see if poor early data were suppressing the early rate.)
 
 **2025-26 is excluded**, because that season uses an incompatible feed format requiring a separate parser.
