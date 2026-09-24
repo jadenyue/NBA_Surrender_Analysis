@@ -1,14 +1,16 @@
 # How hopeless does it have to get before a coach gives up?
 
-In the NBA, some coaches see surrendering as a strategic move to protect their players from injury when a game is hopeless, so they surrender as soon as a game seems out of reach. Others would rather ride their starters through a 40 point deficit than give up. From observation, NBA coaches seem to differ in their tendency to surrender, so in this project I used statistical methods to test that hypothesis and to explore some other phenomena in an often overlooked aspect of basketball.
+In the NBA, some coaches see surrendering as a strategic move to protect their players from injury when a game is hopeless, so they surrender as soon as a game seems out of reach. Other coaches would rather ride their starters through a 40 point deficit than give up. From observation, NBA coaches seem to differ in their tendency to surrender, so in this project I used statistical methods to test that hypothesis and to explore some other phenomena in an often overlooked aspect of basketball.
 
 The action of "surrender" is defined here as the moment a coach withdraws all five of his starters and never brings any of them back.
 
-The analysis covers 29 seasons of play-by-play data, 1996-97 to 2024-25, across 139 coaches with at least 60 trailing team-games each (trailing = at least at one point in the game losing by 6 or more points with at least a minute left to filter for games where a coach benched all his starters because he was winning)
+The analysis covers 25 seasons of play-by-play data, 2000-01 to 2024-25. Every game is counted twice, once from each team's point of view, and each of those is called a **team-game**. Only **trailing** team-games are used, meaning ones where the team was behind by at least 6 points with at least a minute left at some point. A team that led the game is dropped, because a coach emptying his bench while having a landslide win is a different decision than surrendering.
+
+That leaves **40,325 trailing team-games** across 123 coaches.
 
 ## The scale
 
-To measure differences in a coach's tendency to surrender, we need a common measurement that combines the score and the time left, because being down 15 with 2 minutes left is a completely different situation from being down 15 with 10 minutes left.
+To analyse the differences in coaches' tendency to surrender, we need a common measurement that combines the score and the time left, because being down 15 with 2 minutes left is a completely different situation from being down 15 with 10 minutes left.
 
 That scale is the **required comeback rate (RCR)**. For the trailing team, the severity of a deficit is how many points per minute the team would have to gain on the opponent to tie the game at the buzzer.
 
@@ -16,207 +18,214 @@ That scale is the **required comeback rate (RCR)**. For the trailing team, the s
 required comeback rate (RCR) = deficit / minutes remaining      (points per minute)
 ```
 
-Down 20 with 5 minutes left means the losing team needs to gain 4 points every minute. That can be achieved by outscoring the opponent 6 to 2, or 4 to 0. It is a net rate, so what matters is the gap closing rather than how many points either side scores.
+Down 20 with 5 minutes left means the losing team needs to gain 4 points every minute. That can be achieved by outscoring the opponent 6 to 2, or 4 to 0.
 
-An NBA team scores about 2.4 points per minute, so an RCR of 2.4 means the losing team would need to gain a whole team's worth of scoring every minute, on top of whatever the opponent scores.
+Rather than approximate at what each RCR level means, we can look at the data to get a better understanding of RCR in context. For each trailing team, find the **peak RCR**, meaning the worst position it faced all game, and then check whether it went on to win.
 
-Rather than guess at what each level means, we can look at what actually happened. Taking every trailing team that never pulled its starters, finding the worst position it faced, and checking the final score:
+This data only uses teams that never pulled their starters. A team that surrendered has effectively forfeited, so including them would drag the win rates down for reasons that have nothing to do with how winnable the position was.
 
 | Peak RCR faced | Team-games | Came back and won |
 | --- | ---: | ---: |
-| 0 to 0.5 | 10,862 | 81.5% |
-| 0.5 to 1 | 5,496 | 66.6% |
-| 1 to 1.5 | 2,254 | 50.5% |
-| 1.5 to 2 | 1,161 | 36.6% |
-| 2 to 2.5 | 834 | 26.6% |
-| 2.5 to 3 | 583 | 16.0% |
-| 3 to 4 | 1,005 | 7.5% |
-| 4 to 5 | 1,091 | 4.6% |
-| 5 to 7 | 3,815 | 0.8% |
-| 7 and above | 13,855 | 0.0% |
+| 0 to 0.5 | 9,431 | 81.6% |
+| 0.5 to 1 | 4,835 | 66.6% |
+| 1 to 1.5 | 2,006 | 51.1% |
+| 1.5 to 2 | 1,028 | 37.7% |
+| 2 to 2.5 | 718 | 26.9% |
+| 2.5 to 3 | 515 | 15.1% |
+| 3 to 4 | 889 | 8.1% |
+| 4 to 5 | 950 | 5.1% |
+| 5 to 7 | 3,291 | 0.7% |
+| 7 and above | 12,040 | 0.0% |
 
-An RCR of 1 to 1.5 is roughly a coin flip, with those teams winning 50.5% of the time. Once the RCR exceeds 5 the comeback becomes very rare at 0.8%, and beyond 7 it has never happened once across 13,855 team-games.
+An RCR of 1 to 1.5 is roughly 50/50, with those teams winning 51.1% of the time. Once the RCR exceeds 5 the comeback becomes very rare at 0.7%, and beyond 7 it has never happened once across 12,040 team-games.
 
-So a coach who surrenders while facing a low RCR can be said to have a much higher tendency to surrender than one who only surrenders at a high RCR. That gives us the scale. The next step is building the data.
+So a coach who surrenders while facing a low RCR can be said to have a much higher tendency to surrender than one who only surrenders at a high RCR. 
+The next step is building the data.
 
-*The full 46,059 row dataset, with the RCR, deficit and minutes left for every trailing team-game, is in `comeback_rate_all.csv`.*
+*The full 40,325 row dataset, with the RCR, deficit and minutes left for every trailing team-game, is in `comeback_rate_all.csv`.*
 
 ### Building the data
 
-Across 139 coaches covering 42,278 trailing team-games, the coach surrendered in 11.1% of them.
+The model needs a coach attached to every game and a roster quality figure for every team, and it only includes coaches with at least 60 trailing team-games (Where trailing is defined as being down at least 6 points with at least a minute left, as teams who were up the entire game never had to consider surrendering in the first place). That brings the 40,325 total games down to **36,859 team-games across 123 coaches**, and within those, the coach surrendered in 11.5%.
 
-My initial idea was to compare each coach against that 11.1%. But coaches worked in different decades and with different rosters, and both of those affect how often a team ends up conceding. Brian Keefe coaching the 18 win Wizards in 2024-25 is going to concede more than Steve Kerr coaching the 73 win Warriors in 2015-16, simply because Keefe finds himself in more situations where surrender is on the table, even if the two coaches have identical tendencies.
+My initial idea was to compare each coach against that 11.5%. But coaches worked in different decades and with different rosters, and both of those affect how often a team ends up conceding. Brian Keefe coaching the 18 win Wizards in 2024-25 is going to concede more than Steve Kerr coaching the 73 win Warriors in 2015-16, simply because Keefe finds himself in more situations where surrender is on the table, even if the two coaches have identical tendencies.
 
-So the fairer measure is whether a coach's decisions **would** differ from another coach's in the exact same situation. Same RCR, same era, same roster quality, and then see whether one pulls his starters while the other keeps playing.
+So the true measure is about whether a coach's decisions **would** differ from another coach's in the exact same situation. Same RCR, same era, same roster quality, and then see whether one pulls his starters while the other keeps playing.
 
 #### 1. Work out the RCR at every event
 
 Play-by-play data records every event in a game: made shots, rebounds, fouls, turnovers, timeouts, substitutions. A typical NBA game logs 400 to 500 of them, so about 200 per team. At every event where the team is trailing, we calculate the RCR.
 
-Only moments with a deficit of at least 6 points and at least a minute remaining are considered. Below 6 points is not a hopeless position, and inside the final minute the RCR explodes, since being down 6 with 2 seconds left reads 180 points per minute.
+Only eventss with a deficit of at least 6 points and at least a minute remaining are considered. Below 6 points is not a hopeless position, and inside the final minute the RCR is inflated, since being down 6 with 2 seconds left reads 180 points per minute.
 
 #### 2. Reduce each game to one figure
 
-Every trailing team-game is reduced to two data points: an RCR and a flag for whether the coach surrendered.
+Those few hundred RCR values per game then get reduced to a single one, plus a flag for whether the coach surrendered.
 
-If he surrendered, the RCR is the one at the moment his starters came off. If he did not, the RCR is the highest the team faced while they were still on the floor, which is the most hopeless position he sat through without acting.
+If he surrendered, the RCR kept is the one at the moment his starters came off, since that is the state of the game when he made the decision. If he did not, the RCR kept is the highest the team faced while at least one his starters were still on the floor, which is the most hopeless position he sat through without acting.
 
 #### 3. Sort each game's RCR into bands
 
-Each game's RCR is sorted into a band, so that coaches can be compared against others who either surrendered in that band or allowed that band to occur without surrendering.
+The RCR scale is cut into 13 bands, running from 0-to-0.5 to 25-and-above at the top. They are narrow at the bottom and wide at the top, because almost nothing happens below an RCR of 1 and the decisions cluster between 3 and 10.
 
-Every band below the sorted band is then filled with a 0, because a team that reached an RCR of 4.2 passed through 1.2, and 2.9, and 3.7 on the way. The team was in those spots and the coach chose not to pull anyone, so marking those rows 0 lets the data reflect a coach who did not act when faced with that RCR.
+Each game's single RCR sorts into one band, so coaches can be compared against others who either surrendered in that band or reached it without surrendering.
 
-This is why the count expands. Each of the 42,278 team-games becomes several rows, one per band it reached, for a total of 261,696 band-observations, of which 4,681 are a surrender. That gives a baseline surrender chance of 1.79% per band.
+Every band below that one then gets filled with a 0. For example, a team that reached an RCR of 4.2 passed through the 1-to-1.5 band, the 2-to-2.5 band and the 3-to-4 band on its way there. It was in those spots and the coach chose not to pull anyone, so marking those rows 0 lets the data reflect a coach who did not act when faced with that RCR.
 
-| RCR range | Teams at risk | Surrendered | Hazard |
+So each of the 36,859 team-games becomes several rows, one per band it reached, for a total of 227,782 band-observations, of which 4,236 are a surrender. That gives a baseline surrender chance of 1.86% per band.
+
+| RCR range | Team-games at risk | Surrendered | Hazard |
 | --- | ---: | ---: | ---: |
-| 0 to 0.5 | 42,278 | 7 | 0.0% |
-| 0.5 to 1 | 32,256 | 27 | 0.1% |
-| 1 to 1.5 | 27,167 | 109 | 0.4% |
-| 1.5 to 2 | 24,991 | 244 | 1.0% |
-| 2 to 2.5 | 23,674 | 271 | 1.1% |
-| 2.5 to 3 | 22,636 | 304 | 1.3% |
-| 3 to 4 | 21,792 | 630 | 2.9% |
-| 4 to 5 | 20,242 | 669 | 3.3% |
-| 5 to 7 | 18,579 | 1,069 | 5.8% |
-| 7 to 10 | 14,018 | 852 | 6.1% |
-| 10 to 15 | 9,047 | 424 | 4.7% |
-| 15 to 25 | 4,168 | 72 | 1.7% |
-| 25 and above | 848 | 3 | 0.4% |
+| 0 to 0.5 | 36,859 | 6 | 0.0% |
+| 0.5 to 1 | 28,187 | 26 | 0.1% |
+| 1 to 1.5 | 23,726 | 102 | 0.4% |
+| 1.5 to 2 | 21,787 | 230 | 1.1% |
+| 2 to 2.5 | 20,608 | 249 | 1.2% |
+| 2.5 to 3 | 19,700 | 269 | 1.4% |
+| 3 to 4 | 18,958 | 567 | 3.0% |
+| 4 to 5 | 17,583 | 595 | 3.4% |
+| 5 to 7 | 16,124 | 966 | 6.0% |
+| 7 to 10 | 12,158 | 781 | 6.4% |
+| 10 to 15 | 7,793 | 379 | 4.9% |
+| 15 to 25 | 3,565 | 63 | 1.8% |
+| 25 and above | 734 | 3 | 0.4% |
 
-Reading the columns: **teams at risk** is how many team-games reached that band, **surrendered** is how many of them ended there, and **hazard** is the second divided by the first, so the chance a coach pulls his starters at that level given he has not already.
+Reading the columns: **team-games at risk** is how many reached that band, **surrendered** is how many of them surrendered at that point, and **hazard** is the second divided by the first, so the chance a coach pulls his starters at that level given he has not already.
 
-Every team passes through the first band, but only 848 ever exceed an RCR of 25, mostly because games finish long before it gets that bad. The chance of surrendering peaks between 5 and 10 and then falls, which does not mean coaches become more stubborn at extreme deficits. It is selection. The teams still holding out at an RCR of 15 belong to coaches who were probably never going to surrender no matter what, so only the most reluctant are left to be counted.
+Every team passes through the first band, but only 734 ever exceed an RCR of 25, mostly because theres not enough time on the clock for it to get that bad. The chance of surrendering peaks between 5 and 10 and then falls, which does not mean coaches become more stubborn at extreme deficits. It is selection. The teams still not surrendering when faced with an RCR of 15 are probably coached by someone who were probably never going to surrender no matter what, so only the most reluctant are left to be counted.
 
-The important thing about this table is that the hazard runs from 0.0% to 6.1%, meaning a team's band changes the chance of a surrender more than a hundredfold. Each row is therefore a matched comparison set, and coaches are only ever compared against each other within the same band.
+This table is that the hazard runs from 0.0% to 6.4%, meaning a team's band changes the chance of a surrender more than a hundredfold. Each row is therefore a matched comparison set, and coaches are only ever compared against each other within the same band.
 
 ### The model
 
-Fit a logistic regression on those 261,696 rows, predicting whether a surrender happened:
+We first fit a logistic regression on those 227,782 rows, predicting whether a surrender happened:
 
 ```
 logit P(surrender in this band) = intercept + band dummies + season dummies + b x team SRS
 ```
+(A logistic regression is the standard way to model a yes-or-no outcome, and "logit" means it models on the log of the odds rather than the probability directly, because a probability cannot go below 0 or above 1)
 
-The band dummies give every level of hopelessness its own baseline, which is what holds the situation constant. The season dummies account for surrendering becoming more common over the 29 seasons (More on that later). The SRS term handles roster quality, SRS being Basketball Reference's Simple Rating System, which is a team's average point margin adjusted for strength of schedule, centred on zero.
+The band dummies give every level of hopelessness its own baseline, which is what holds the situation constant. The season dummies account for surrendering becoming more common over the 25 seasons, which is covered later. The SRS term handles roster quality, SRS being Basketball Reference's Simple Rating System, a team's average point margin adjusted for strength of schedule, centred on zero.
 
 In this first model there is no coach variable at all, so it predicts as well as it can without knowing who was in charge.
 
-Then fit the same model again with a coach variable added, and see whether knowing the coach helps it predict surrenders better.
+Then fit the same model again with a coach variable added, and see whether knowing the coach helps it predict surrenders better. The measure of how well a model fits is its **log-likelihood**, which is how probable the observed data is under that model. It is always negative, and closer to zero is better.
 
 ```
-without coach effects:  log-likelihood -20,374.4
-with coach effects:     log-likelihood -20,073.2
+without coach effects:  log-likelihood -18,282.3
+with coach effects:     log-likelihood -18,023.0
 ```
 
-Adding coaches improved the fit by 301 points, but that on its own proves nothing. Adding 138 parameters improves fit regardless of what they contain, because part of any dataset is noise and noise is partly fittable. The improvement has to be measured against what 138 meaningless parameters would have bought:
+Adding coaches improved the fit by 259 points, but that on its own is not informative. Adding parameters always improves fit, because part of any dataset is noise and noise is partly fittable. Here the coach variable adds 122 parameters, one for each of the 123 coaches minus one that acts as the reference point. So the improvement has to be measured against what 122 meaningless parameters would have bought, using a likelihood-ratio test:
 
 ```
-LR chi-square = 2 x 301.2 = 602 on 138 degrees of freedom,  p = 2.9 x 10^-59
+LR chi-square = 2 x 259.3 = 519 on 122 degrees of freedom,  p = 2.5 x 10^-50
 ```
 
-A parameter carrying no information buys about 1 point on average, so if coaches added nothing the statistic would land near 138. It lands at 602.
+A parameter carrying no information buys about 1 point on average, so if coaches added nothing the statistic would land near 122. The statistic we got was 519, with a p value near 0. 
 
 ### The answer
+Yes. Held at the same RCR, in the same era, with the same roster quality, coaches have different tendencies on the decision of surrendering.
 
-Yes. Held at the same RCR, in the same era, with the same roster quality, coach identity still predicts the decision to surrender.
-
-Looking at only coaches with 100 or more trailing team-games, hazard ratios vary from 0.34 to 2.12, a 6.3 fold range:
+Looking at only coaches with 100 or more trailing team-games, hazard ratios vary from 0.27 to 2.09, so a 7.6x difference:
 
 | Quickest | HR | Slowest | HR |
 | --- | ---: | --- | ---: |
-| Stephen Silas | 2.12 | George Karl | 0.34 |
-| Paul Silas | 2.11 | Butch Carter | 0.43 |
-| Wes Unseld | 2.04 | Mike D'Antoni | 0.44 |
-| Rudy Tomjanovich | 1.99 | Rick Pitino | 0.44 |
-| Terry Porter | 1.85 | Isiah Thomas | 0.46 |
-| Jim Boylen | 1.79 | Erik Spoelstra | 0.47 |
+| Stephen Silas | 2.09 | George Karl | 0.27 |
+| Paul Silas | 2.07 | Mike D'Antoni | 0.41 |
+| Wes Unseld | 1.97 | Erik Spoelstra | 0.44 |
+| Rudy Tomjanovich | 1.83 | Isiah Thomas | 0.45 |
+| Terry Porter | 1.79 | Dwane Casey | 0.47 |
+| Kurt Rambis | 1.76 | Doug Collins | 0.55 |
 
-A hazard ratio is a multiplier on the baseline chance, so against the 1.79% baseline a ratio of 2.12 means a 3.8% chance of acting at any given RCR, and 0.34 means a 0.6% chance.
+A hazard ratio is a multiplier on the baseline chance, so against the 1.86% baseline a ratio of 2.09 means a 3.9% chance of acting in any given band, and 0.27 means a 0.5% chance.
 
-In theory then, if Stephen Silas and George Karl were in an identical spot, both needing 4 points per minute to come back, coaching a league average roster in the same season, Silas is roughly six times more likely to have surrendered.
+In theory then, if Stephen Silas and George Karl were in an identical spot, both needing 4 points per minute to come back, coaching a league average roster in the same season, Silas would be roughly eight times more likely to surrender.
 
-The 100 game floor matters here. Without it the range widens to 15.7 fold, but every coach at either extreme has fewer than 95 trailing team-games, which is too few to trust. George Karl at 0.34 across 823 games is the most solid entry in the table.
+So coaches do inherently differ in their surrender tendency independent of their team or era, by up to eight times.
 
-So coaches do inherently differ in their surrender tendency independent of their team or era, by up to six times. With the initial question answered, I wanted to look at some other aspects of the same data.
+Now with the initial question answered, I wanted to look at some other aspects of the same data.
 
-*The hazard ratios for all 139 coaches are in `coach_hazard_ratios.csv`.*
+*The hazard ratios for all 123 coaches are in `coach_hazard_ratios.csv`.*
 
 ### Is it the coach or the roster?
 
-The model already removes era and roster when comparing one coach to another, but for a coach like Doc Rivers who moved across several franchises, it is worth seeing whether his tendency changes with the team he is coaching.
+The model already removes era and roster when comparing one coach to another, but for a coach like Doc Rivers who moved across several franchises, I wanted to see whether his tendency changes with the team he is coaching.
 
-Start with 76 coaches who lasted four or more seasons and had real variation in roster quality. Subtracting each coach's own average leaves only how he moved from year to year:
+Before that, we need one number for comparison. Seperating the variation in surrender rates between coaches into the part explained by era and roster, the part that is just small-sample noise, and the part left over, the genuine coach-to-coach spread is represented by the **standard deviation of 3.3 percentage points** around the league average of 11.5%. So a coach one standard deviation above average surrenders in about 15% of his trailing games, and one below in about 8%.
 
-```
-within-coach slope: -0.143 percentage points of surrender rate per SRS point
-                    SE 0.057, t = -2.49, n = 675 coach-seasons
-```
-
-The sign is the interesting part. The same coach with a better roster surrenders less than he does with a bad one, by about 1.4 percentage points per ten SRS points. The reasoning would be that a good team that is behind has more reason to think it can come back, so the coach leaves his starters out there.
-
-Now take the sixty coaches who coached two or more franchises with at least 60 trailing team-games at each. Pair each coach's rate at his main franchise against the weighted average of his others, then correlate across coaches:
+Now, start with 69 coaches who lasted four or more seasons and had real variation in roster quality. Subtracting each coach's own career average surrender rate, and his own average SRS, gives us only how he moved from year to year:
 
 ```
-r = +0.306, 95% CI [+0.084, +0.502], 3,000 bootstrap resamples over coaches
+within-coach slope: -0.116 percentage points of surrender rate per SRS point
+                    SE 0.064, t = -1.81, n = 584 coach-seasons
 ```
 
-The interval excludes zero, so something inherent does travel with the coach. For comparison, the correlation of roster strength across the same coaches' clubs is +0.233, meaning a coach's tendency follows him slightly better than his luck with rosters does.
+At t = -1.81, the test is statistically significant only at the 10% significance level, but it's still indicative of something interesting. The same coach with a better roster surrenders less than he does with a bad one, by about 1.2 percentage points per ten SRS points. The reasoning would be that a good team that is behind has more reason to think it can come back, so the coach leaves his starters out there. It is worth noting that at t = −1.81 this falls just short of conventional significance, so the direction is suggestive rather than established.
 
-But +0.306 is only moderate, and the individual cases show why. Some coaches stay remarkably consistent across very different rosters, and others do not.
+Now take the forty-nine coaches who coached two or more franchises with at least 60 trailing team-games at each. Pair each coach's surrender rate at his main franchise, meaning the one where he coached most, against the average of his other franchises weighted by how many games he had at each. Then correlate those pairs across all forty-nine coaches:
 
-To see that, take the 22 coaches who had both a real change in roster quality between clubs, meaning at least 5 SRS points, and enough games for the rates to mean something, meaning at least 250 trailing team-games. Then sort by how much their surrender rate moved.
+```
+r = +0.290, 95% CI [+0.039, +0.507], 3,000 bootstrap resamples over coaches
+```
+
+The interval excludes zero, though only just, so something inherent does travel with the coach. As a point of comparison, running the same pairing on roster strength instead of surrender rate gives only +0.105, meaning a coach's tendency follows him considerably better than his luck with rosters does.
+
+But +0.290 is only moderate, and the individual cases show why. Some coaches stay remarkably consistent across very different rosters, and others do not.
+
+To see that, take the 20 coaches who had both a real change in roster quality between clubs, meaning at least 5 SRS points, and enough games for the rates to mean something, meaning at least 250 trailing team-games. Then sort by how much their surrender rate moved.
+
+In the tables below, each cell reads as team, then that team's SRS, then his surrender rate there. So "NYK -4.8 -> 5%" means he surrendered in 5% of his trailing games with a New York roster rated 4.8 points below average.
 
 **The most stable coaches**
 
 | Coach | Weak roster | Strong roster | SRS gap | Rate change |
 | --- | --- | --- | ---: | ---: |
 | Isiah Thomas | NYK -4.8 -> 5% | IND +0.5 -> 5% | 5.3 | 0.0 pt |
-| Doug Collins | WAS -1.5 -> 6% | DET +3.7 -> 7% | 5.3 | 0.9 pt |
+| Rick Adelman | MIN -0.5 -> 15% | SAC +4.6 -> 14% | 5.1 | 1.4 pt |
+| Don Nelson | GSW -1.5 -> 8% | DAL +5.4 -> 5% | 6.9 | 2.4 pt |
 | Quin Snyder | ATL -1.9 -> 8% | UTA +3.8 -> 11% | 5.7 | 2.5 pt |
 | Mike Budenholzer | ATL -0.4 -> 19% | MIL +5.6 -> 16% | 6.0 | 2.6 pt |
 | Dwane Casey | DET -5.2 -> 7% | TOR +1.8 -> 4% | 7.0 | 2.9 pt |
-| Brian Hill | VAN -7.6 -> 8% | ORL -0.4 -> 5% | 7.2 | 2.9 pt |
-| Mike Dunleavy | LAC -3.6 -> 7% | POR +4.1 -> 3% | 7.7 | 4.4 pt |
-| Byron Scott | LAL -7.6 -> 12% | NJN +0.3 -> 11% | 7.9 | 4.7 pt |
+| George Karl | SAC -2.3 -> 0% | DEN +3.3 -> 3% | 5.6 | 3.7 pt |
+| Flip Saunders | WAS -6.0 -> 11% | DET +5.3 -> 12% | 11.3 | 3.8 pt |
 
 **Coaches whose tendency changed dramatically depending on team**
 
 | Coach | Weak roster | Strong roster | SRS gap | Rate change |
 | --- | --- | --- | ---: | ---: |
 | Larry Drew | CLE -9.4 -> 3% | ATL +0.2 -> 20% | 9.6 | 17.1 pt |
-| Rick Adelman | GSW -4.9 -> 24% | SAC +3.9 -> 13% | 8.8 | 11.0 pt |
 | Jacque Vaughn | ORL -6.3 -> 14% | BKN -1.1 -> 24% | 5.2 | 10.4 pt |
 | Lionel Hollins | BKN -4.7 -> 22% | MEM +1.7 -> 12% | 6.4 | 9.4 pt |
 | Nick Nurse | PHI -2.6 -> 21% | TOR +2.6 -> 12% | 5.3 | 9.3 pt |
 | Stan Van Gundy | DET -0.5 -> 13% | ORL +4.9 -> 5% | 5.3 | 9.2 pt |
 | Dave Joerger | SAC -3.9 -> 19% | MEM +1.2 -> 11% | 5.1 | 8.7 pt |
 | Mike D'Antoni | LAL -2.6 -> 5% | HOU +5.2 -> 11% | 7.9 | 8.2 pt |
+| Larry Brown | NYK -6.3 -> 10% | DET +4.2 -> 3% | 10.5 | 7.5 pt |
 
-Isiah Thomas is the cleanest case of a coach whose tendency is his own. New York at -4.8 SRS and Indiana at +0.5, so a five point swing in roster quality, and his surrender rate did not move at all. Doug Collins is nearly as consistent, moving 0.9 points across the same size of swing.
+Isiah Thomas is the cleanest case of a coach whose tendency is his own. New York at -4.8 SRS and Indiana at +0.5, so a five point difference in roster quality, and his surrender rate did not move at all. Rick Adelman is nearly as consistent, moving 1.4 points across a similar swing, and Flip Saunders held to within 3.8 points across an eleven point change in roster quality.
 
-Larry Drew is the opposite, at 3% with Cleveland and 20% with Atlanta. For him the number is clearly not a fixed trait, it is a reaction to whatever he walked into.
+Larry Drew is the opposite, at 3% with Cleveland and 20% with Atlanta. For him the number is clearly not a fixed trait, it is a reaction to whatever situation he walked into.
 
-The median rate change across all 22 is 5.4 percentage points, which is larger than the genuine spread between coaches across the whole league. So the typical coach who changes clubs moves more than the league varies, and only the top of the first table looks like a tendency that really belongs to the man.
+The median rate change across all 20 is 5.3 percentage points, which is larger than the 3.3 point standard deviation between coaches. So the typical coach who changes teams moves more than the whole league varies, and only the top of the first table looks like a tendency that really belongs to the man.
 
-As for Doc Rivers, who was the name I was originally curious about, he is absent from both tables, just like he is absent from in-game adjustments. All four of the teams he coached were at or above league average, giving him an SRS gap of only 3.6, which is below the threshold for either table. He does look stable within that narrow range though, going from 9.9% with a +0.4 SRS Orlando team to 11.7% with a +4.0 SRS Clippers team, a change of under 2 percentage points.
+As for Doc Rivers, who was the name I was originally curious about, he is absent from both tables, just like he is absent from in-game adjustments. All four of the teams he coached were at or above league average, giving him an SRS gap of only 3.7, which is below the threshold for either table. Within that narrow range his rate still moved 7.3 points, from 8.9% with a +1.6 SRS Boston team to 16.2% with a +3.9 SRS Philadelphia team.
 
 *The per-franchise and per-season breakdowns behind these tables are in `coach_team.csv` and `coach_team_season.csv`.*
 
 ### How surrendering has increased over time
 
-I mentioned that I noticed surrendering has increased over time when building the model to measure coach tendency, and it's something worth diving deeper into. 
+I mentioned that I noticed surrendering has increased over time when building the model to measure coach tendency, and it is something worth diving deeper into.
 
-Across the first five seasons, 1996-97 to 2000-01, coaches surrendered in **8.3%** of trailing team-games. Across the last five, 2020-21 to 2024-25, that figure is **16.9%**. The surrender rate has doubled, and it correlates with season at **+0.886**.
+Across the first five seasons, 2000-01 to 2004-05, coaches surrendered in **8.1%** of trailing team-games. Across the last five, 2020-21 to 2024-25, that figure is **16.9%**. The surrender rate has doubled, and correlating each season's rate against the year gives **+0.909**.
 
 | Season | Trailing games | Surrendered | Rate | Median RCR when surrendering |
 | --- | ---: | ---: | ---: | ---: |
-| 1996-97 | 1,613 | 122 | 7.6% | 4.60 |
-| 1997-98 | 1,569 | 135 | 8.6% | 5.51 |
-| 1998-99 | 958 | 79 | 8.2% | 5.90 |
-| 1999-00 | 1,594 | 145 | 9.1% | 5.11 |
 | 2000-01 | 1,585 | 128 | 8.1% | 4.61 |
+| 2001-02 | 1,580 | 139 | 8.8% | 4.60 |
+| 2002-03 | 1,594 | 140 | 8.8% | 4.80 |
+| 2003-04 | 1,620 | 116 | 7.2% | 5.22 |
+| 2004-05 | 1,677 | 129 | 7.7% | 5.60 |
 | ... | ... | ... | ... | ... |
 | 2020-21 | 1,423 | 221 | 15.5% | 5.49 |
 | 2021-22 | 1,633 | 264 | 16.2% | 5.13 |
@@ -224,33 +233,34 @@ Across the first five seasons, 1996-97 to 2000-01, coaches surrendered in **8.3%
 | 2023-24 | 1,622 | 304 | 18.7% | 5.29 |
 | 2024-25 | 1,595 | 300 | 18.8% | 5.54 |
 
-The last column shows that **The median RCR at which coaches surrender has not changed substatially**, going from 5.14 across the first five seasons to 5.36 across the last five, with a correlation to season of only +0.241.
+The last column shows that **the median RCR at which coaches surrender has drifted up rather than down**, going from 4.97 across the first five seasons to 5.36 across the last five, a correlation with the year of +0.502.
 
-So coaches have not lowered their threshold. They still wait until a comeback needs roughly 5.2 points per minute, which historically wins under 1% of the time. What has changed is how often games reach that state: more games are blowouts that require a coach to consider surrendering.
+A higher RCR threshold means coaches are waiting until games are *more* hopeless before acting. So coaches have not lowered their standards at all, and if anything have become marginally more stubborn. The rate still doubled. What changed is how often games reach that state, meaning more games are becoming blowouts that require a coach to consider surrendering.
 
-From 1996-97 to 2012-13 the rate averaged 8.7% and barely trended at all, with a correlation to season of +0.459. From 2013-14 onwards it averaged 14.0% and climbed steadily at +0.876. Something changed around 2013, and the timing lines up with the three point era rather than with any rule change or shift in coaching philosophy. A league taking far more threes at a faster pace produces a wider spread of outcomes, so leads that used to take a quarter to build now can be built in minutes.
+The rise also correlates with particular league trends. From 2000-01 to 2012-13 the rate averaged 9.0%, and although it drifted upward it did so weakly and unevenly, at a correlation of +0.624. From 2013-14 onwards it averaged 14.2% and climbed steadily at +0.885. The timing lines up with the three point era rather than with any rule change or shift in coaching philosophy. A league taking far more threes at a faster pace produces a wider spread of outcomes, with the good teams being able to get ahead on the bad teams much more quickly. 
 
-If coaches were getting softer, the RCR threshold would have fallen. It did not. So this is a measurement of games becoming less competitive rather than coaches becoming more willing to quit.
+If coaches were getting softer, the RCR threshold would have fallen. It rose. So this is a measurement of games becoming less competitive rather than coaches becoming more willing to quit.
 
 *The full season by season series is in `comeback_rate_all.csv`, grouped by the season column.*
 
-
 ## Conclusion
-So coaches do inherently differ in how readily they surrender. Faced with the same RCR, in the same era, with a roster of the same quality, the quickest coach is roughly six times more likely to pull his starters than the slowest. Stephen Silas acts at 3.8% of moments where George Karl acts at 0.6%.
-That tendency travels with the coach across different franchises at r = +0.306, and coaches like Isiah Thomas and Doug Collins barely move at all when their roster swings by five SRS points. Others swing by 10 to 17 percentage points depending on what team they walked into, and the median coach who changes clubs moves more than the entire league varies. So a coach's number is a tendency rather than a fixed trait.
-The behaviour is also becoming much more common, with the surrender rate doubling over 29 seasons from 8.3% to 16.9%. What has not changed is the threshold, as the median RCR at surrender has sat at roughly 5.2 the entire time. Coaches are not giving up any earlier than they used to, there are just far more games reaching the point where giving up makes sense.
 
+So coaches do inherently differ in how readily they surrender. Faced with the same RCR, in the same era, with a roster of the same quality, the quickest coach is roughly eight times more likely to pull his starters than the slowest. Stephen Silas acts at 3.9% of moments where George Karl acts at 0.5%.
+
+That tendency travels with the coach across different franchises at r = +0.290, and coaches like Isiah Thomas and Rick Adelman barely move at all when their roster swings by five SRS points. Others swing by 8 to 17 percentage points depending on what team they walked into, and the median coach who changes clubs moves more than the 3.3 point spread between coaches league-wide. So a coach's number is a tendency rather than a fixed trait.
+
+The behaviour is also becoming much more common, with the surrender rate doubling over 25 seasons from 8.1% to 16.9%. What has not fallen is the threshold, as the median RCR at surrender rose slightly from 4.97 to 5.36 across the period. Coaches are not giving up any earlier than they used to, there are just far more games reaching the point where giving up makes sense.
 
 ## Limitations
 
-**Intent is only inferred** No coach announces that he is giving up. The last permanent exit of five starters is indicative of surrender, but could also be due to injury, ejection, foul trouble, or minute management unrelated to the score and wanting to give up. 
+**Intent is only inferred.** No coach announces that he is giving up. The last permanent exit of five starters is indicative of surrender, but could also be due to injury, ejection, foul trouble, or minute management unrelated to the score.
 
 **The era control is a set of season dummies**, which absorbs everything that moved with time, including the three point revolution, pace and rule changes, without separating them. It removes era as a confounder but treats it as a black box.
 
-**Each coach gets one hazard ratio applied at every band**, which assumes his effect is constant across all levels of hopelessness. A coach who is quick at an RCR of 3 but stubborn at 10 would be averaged into the middle. 
+**Each coach gets one hazard ratio applied at every band**, which assumes his effect is constant across all levels of hopelessness. A coach who is quick at an RCR of 3 but stubborn at 10 would be averaged into the middle.
 
-**SRS is not a clean control** It is built from point margin, and point margin is affected by surrendering itself, so the control variable and the outcome are not fully independent. It is also a season-level figure, meaning it describes the roster a coach had rather than the team he actually had available on a particular game. And it captures quality but not team depth.
+**SRS is not a clean control.** It is built from point margin, and point margin is affected by surrendering itself, so the control variable and the outcome are not fully independent. It is also a season-level figure, meaning it describes the roster a coach had rather than the team he actually had available for a particular game. And it captures quality but not team depth.
 
-**Play-by-play substitution data is less complete in older seasons.** Team-games with fewer than 15 recorded substitutions were excluded, which affects 1996-97 far more than 2024-25. Since missing substitutions suppress detection, this could bias the historical trend, though two separate checks suggest the trend is real (The rise in recorded substitutions is real, since the play-by-play counts track an independent official measure of players used per game at r = +0.969. Second, dropping the sparsest logs makes the surrender trend slightly steeper rather than flatter, which is the opposite of what you would see if poor early data were suppressing the early rate.)
+**Play-by-play substitution data is less complete in earlier seasons.** Team-games with fewer than 15 recorded substitutions were excluded, which affects 2000-01 more than 2024-25, with pass rates of 76.7% and 98.0% respectively and median substitutions logged rising from 18 to 24. Since missing substitutions make a surrender undetectable, this could manufacture the historical trend rather than reveal it. Two checks argue against that. First, the rise in recorded substitutions is real rather than a logging change, since the play-by-play counts track an independent official measure of players used per game at r = +0.969. Second, restricting to denser logs does not flatten the trend at all: the correlation with year is +0.909 unrestricted, +0.909 among games with 18 or more substitutions, +0.911 at 20 or more, and +0.909 at 22 or more.
 
 **2025-26 is excluded**, because that season uses an incompatible feed format requiring a separate parser.
