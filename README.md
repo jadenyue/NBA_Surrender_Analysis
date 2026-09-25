@@ -267,6 +267,8 @@ The behaviour is also becoming much more common, with the surrender rate doublin
 
 **Play-by-play substitution data is less complete in earlier seasons.** Team-games with fewer than 15 recorded substitutions were excluded, which affects 2000-01 more than 2024-25, with pass rates of 76.7% and 98.0% respectively and median substitutions logged rising from 18 to 24. Since missing substitutions make a surrender undetectable, this could falsify the stated historical trend of surrendering becoming more common. However, dropping the thinnest logs actually shows a stronger trend. The correlation between surrenders and year is +0.909 unrestricted, +0.909 among games with 18 or more substitutions, +0.911 at 20 or more, and +0.909 at 22 or more.
 
+**A number of thresholds were chosen to be reasonable but still arbitrarily:** a deficit of at least 6 points and a minute remaining to count as trailing, 60 trailing games to enter the model and 100 to appear in the ranking, and for the roster tests 4 seasons, an SRS spread above 1.5, an SRS gap of 5 between clubs and 250 games. I tested if changing the 100 game floor would alter rankings, and the results came back negative. The rest are stated where used but their sensitivity is untested.
+
 **2025-26 is excluded**, because that season uses an incompatible feed format requiring a separate parser.
 
 ## Data sources
