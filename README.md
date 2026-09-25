@@ -148,12 +148,21 @@ In theory then, if Stephen Silas and George Karl were in an identical spot, both
 
 So coaches do inherently differ in their surrender tendency independent of their team or era, by up to eight times.
 
+Now looking at the data for the most known coaches of this era:
+| Coach | HR | Rank | Games Sample Size | Comment |
+| --- | ---: | ---: | ---: | --- |
+| Joe Mazzulla | 1.47 | 18 | 108 | One of the most modern, analytical minded coaches is also one of the most proactive in surrendering. |
+| Gregg Popovich | 1.16 | 44 | 996 | Slightly quicker than average on 996 games. Spurs resting everyone was mostly about resting players for entire games rather than surrendering faster. |
+| Doc Rivers | 1.10 | 49 | 1,076 | Dead average, out of 106. |
+| Tom Thibodeau | 0.71 | 91 | 562 | Stubborn, which matches exactly with his play starters 48 minutes no matter what reputation. |
+| Steve Kerr | 0.65 | 94 | 453 | The dynasty Warriors teams were famous for emptying benches, but that was mostly in blowout wins and not in losses, which is what gets measured here. |
+| Erik Spoelstra | 0.44 | 104 | 790 | Fourth most stubborn in the league. Indicative of the Miami Heat Culture as refusing to concede. |
+
 Now with the initial question answered, I wanted to look at some other aspects of the same data.
 
-*The hazard ratios for all 123 coaches are in `coach_hazard_ratios.csv`.*
+*The hazard ratios and rankings for all 123 coaches are in `coach_hazard_ratios.csv`.*
 
 ### Is it the coach or the roster?
-
 The model already removes era and roster when comparing one coach to another, but for a coach like Doc Rivers who moved across several franchises, I wanted to see whether his tendency changes with the team he is coaching.
 
 Before that, we need one number for comparison. Seperating the variation in surrender rates between coaches into the part explained by era and roster, the part that is just small-sample noise, and the part left over, the true coach-to-coach variation is represented by the **standard deviation that works out to 3.3 percentage points** around the league average of 11.5%. So a coach one standard deviation above average surrenders in about 15% of his trailing games, and one below in about 8%.
