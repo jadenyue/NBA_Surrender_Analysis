@@ -50,7 +50,7 @@ The next step is building the data.
 
 The model needs a coach attached to every game and a roster quality figure for every team, and it only includes coaches with at least 60 trailing team-games to have a large enough sample. That brings the 40,325 games down to 36,859 team-games across 123 coaches, and within those, the coach surrendered in 11.5%.
 
-My initial idea was to compare each coach against that 11.5%. But coaches worked in different decades and with different rosters, and both of those affect how often a team ends up surrendering. Brian Keefe coaching the 18 win Wizards in 2024-25 is going to concede more than Steve Kerr coaching the 73 win Warriors in 2015-16, simply because Keefe finds himself in more situations where surrender is on the table, even if the two coaches have identical tendencies.
+My initial idea was to use a simple chi-squared test to compare each coach against that 11.5%. But coaches worked in different decades and with different rosters, and both of those affect how often a team ends up surrendering. Brian Keefe coaching the 18 win Wizards in 2024-25 is going to concede more than Steve Kerr coaching the 73 win Warriors in 2015-16, simply because Keefe finds himself in more situations where surrender is on the table, even if the two coaches have identical tendencies.
 
 So the true measure is about whether a coach's decisions **would** differ from another coach's in the exact same situation. Same RCR, same era, same roster quality, and then see whether one pulls his starters while the other keeps playing.
 
