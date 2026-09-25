@@ -1,6 +1,6 @@
 # How hopeless does it have to get before a coach gives up?
 
-In the NBA, some coaches see surrendering as a strategic move to protect their players from injury when a game is hopeless, so they surrender as soon as a game seems out of reach. Other coaches would rather ride their starters through a 40 point deficit than give up. From observation, NBA coaches seem to differ in their tendency to surrender, so in this project I used statistical methods to test that hypothesis and to explore some other phenomena in an often overlooked aspect of basketball.
+In the NBA, some coaches see surrendering as a strategic move to protect their players from injury when a game is hopeless, so they surrender as soon as a game seems out of reach. Other coaches would rather ride their starters through a 40 point deficit than give up. From observation, NBA coaches seem to differ in their tendency to surrender, so in this project I used statistical methods (discrete-time hazard model, likelihood ratio test variance decomposition) to test that hypothesis and to explore some other phenomena in an often overlooked aspect of basketball.
 
 The action of "surrender" is defined here as the moment a coach withdraws all five of his starters and never brings any of them back.
 
